@@ -43,6 +43,18 @@
 git clone https://github.com/Moa-toon/moa-toon_server
 ```
 
+## 필요 파일
+
+### envs/.env.${process.env.NODE_ENV}
+
+```
+DATABASE_HOST=
+DATABASE_USERNAME=
+DATABASE_PASSWORD=
+DATABASE_NAME=
+DATABASE_SYNCHRONIZE=
+```
+
 ## 구동 명령어
 
 ```
