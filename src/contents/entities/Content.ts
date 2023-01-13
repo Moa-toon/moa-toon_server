@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { ContentAuthor } from './ContentAuthor';
 import { ContentGenre } from './ContentGenre';
+import { ContentUpdateDay } from './ContentUpdateDay';
 import { Platform } from './Platform';
 
 @Entity('content')
@@ -88,4 +89,10 @@ export class Content {
 
   @OneToMany(() => ContentAuthor, (contentAuthors) => contentAuthors.Content)
   ContentAuthors: ContentAuthor[];
+
+  @OneToMany(
+    () => ContentUpdateDay,
+    (contentUpdateDays) => contentUpdateDays.Content,
+  )
+  ContentUpdateDays: ContentUpdateDay[];
 }

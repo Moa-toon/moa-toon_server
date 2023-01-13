@@ -1,4 +1,6 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Content } from './Content';
+import { ContentUpdateDay } from './ContentUpdateDay';
 
 @Entity('updateDay')
 export class UpdateDay {
@@ -16,4 +18,10 @@ export class UpdateDay {
     | 'sun'
     | 'daily'
     | 'finished';
+
+  @OneToMany(
+    () => ContentUpdateDay,
+    (contentupdateDays) => contentupdateDays.UpdateDay,
+  )
+  ContentUpdateDays: ContentUpdateDay[];
 }
