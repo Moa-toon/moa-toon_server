@@ -67,11 +67,11 @@ export class Content {
   isUpdated: boolean;
 
   @Column('datetime', {
-    name: 'createdAt',
+    name: 'startedAt',
     comment: '연재 시작일',
-    default: () => "'CURRENT_TIMESTAMP(6)'",
+    default: () => 'CURRENT_TIMESTAMP',
   })
-  createdAt: Date;
+  startedAt: Date;
 
   @Column('datetime', {
     name: 'finishedAt',
