@@ -31,6 +31,30 @@ export class Content {
   })
   thumbnailPath: string;
 
+  @Column('boolean', {
+    name: 'isNew',
+    comment: '신규 콘텐츠 여부',
+  })
+  isNew: boolean;
+
+  @Column('boolean', {
+    name: 'isAdult',
+    comment: '성인 콘텐츠 여부',
+  })
+  isAdult: boolean;
+
+  @Column('boolean', {
+    name: 'isPaused',
+    comment: '콘텐츠 휴재 여부',
+  })
+  isPaused: boolean;
+
+  @Column('boolean', {
+    name: 'isUpdated',
+    comment: '콘텐츠 업데이트 여부',
+  })
+  isUpdated: boolean;
+
   @Column('datetime', {
     name: 'createdAt',
     comment: '연재 시작일',
