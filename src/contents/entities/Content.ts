@@ -1,4 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Platform } from './Platform';
 
 @Entity('content')
 export class Content {
@@ -68,4 +75,8 @@ export class Content {
     comment: '연재 종료일',
   })
   finishedAt: Date | null;
+
+  @ManyToOne(() => Platform, (platform) => platform.Contents)
+  @JoinColumn({ name: 'platformIdx', referencedColumnName: 'idx' })
+  Platform: Platform;
 }
