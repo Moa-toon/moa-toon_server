@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { ContentAuthor } from './ContentAuthor';
 
 @Entity('Author')
 export class Author {
@@ -10,4 +11,7 @@ export class Author {
 
   @Column('varchar', { name: 'name', comment: '작가 이름', length: 30 })
   name: string;
+
+  @OneToMany(() => ContentAuthor, (contentAuthors) => contentAuthors.Author)
+  ContentAuthors: ContentAuthor[];
 }

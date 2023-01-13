@@ -6,6 +6,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { ContentAuthor } from './ContentAuthor';
 import { ContentGenre } from './ContentGenre';
 import { Platform } from './Platform';
 
@@ -84,4 +85,7 @@ export class Content {
 
   @OneToMany(() => ContentGenre, (contentGenres) => contentGenres.Content)
   ContentGenres: ContentGenre[];
+
+  @OneToMany(() => ContentAuthor, (contentAuthors) => contentAuthors.Content)
+  ContentAuthors: ContentAuthor[];
 }
