@@ -1,4 +1,5 @@
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { ContentGenre } from './ContentGenre';
 
 @Entity('genre')
 export class Genre {
@@ -14,4 +15,7 @@ export class Genre {
 
   @Column('varchar', { name: 'name', comment: '장르 이름', length: 30 })
   name: string;
+
+  @OneToMany(() => ContentGenre, (contentGenres) => contentGenres.Genre)
+  ContentGenres: ContentGenre[];
 }

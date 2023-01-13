@@ -3,8 +3,10 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { ContentGenre } from './ContentGenre';
 import { Platform } from './Platform';
 
 @Entity('content')
@@ -79,4 +81,7 @@ export class Content {
   @ManyToOne(() => Platform, (platform) => platform.Contents)
   @JoinColumn({ name: 'platformIdx', referencedColumnName: 'idx' })
   Platform: Platform;
+
+  @OneToMany(() => ContentGenre, (contentGenres) => contentGenres.Content)
+  ContentGenres: ContentGenre[];
 }
