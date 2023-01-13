@@ -1,7 +1,7 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { ContentAuthor } from './ContentAuthor';
 
-@Entity('Author')
+@Entity('author')
 export class Author {
   @PrimaryGeneratedColumn({ type: 'int', name: 'idx', comment: '인덱스' })
   idx: number;
