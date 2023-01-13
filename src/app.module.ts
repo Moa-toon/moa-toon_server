@@ -3,23 +3,25 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import * as Joi from 'joi';
+import { getTypeOrmModule } from './common/utils/getTypeOrmModule';
+import { ContentsModule } from './modules/contents/contents.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `envs/.env.${process.env.NODE_ENV}`,
+      validationSchema: Joi.object({
+        DATABASE_HOST: Joi.string().required(),
+        DATABASE_PORT: Joi.number().required(),
+        DATABASE_USERNAME: Joi.string().required(),
+        DATABASE_PASSWORD: Joi.string().required(),
+        DATABASE_NAME: Joi.string().required(),
+      }),
     }),
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: process.env.DATABASE_HOST,
-      port: 3306,
-      username: process.env.DATABASE_USERNAME,
-      password: process.env.DATABASE_PASSWORD,
-      database: process.env.DATABASE_NAME,
-      entities: [__dirname + '/**/*.entity{.ts, .js}'],
-      synchronize: Boolean(process.env.DATABASE_SYNCHRONIZE),
-    }),
+    getTypeOrmModule(),
+    ContentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
