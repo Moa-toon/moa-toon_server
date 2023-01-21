@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import * as Joi from 'joi';
 import { getTypeOrmModule } from './common/utils/getTypeOrmModule';
 import { ContentsModule } from './modules/contents/contents.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ContentsModule } from './modules/contents/contents.module';
     }),
     getTypeOrmModule(),
     ContentsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
