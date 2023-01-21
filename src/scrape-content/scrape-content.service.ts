@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { load } from 'cheerio';
 
 @Injectable()
 export class ScrapeContentService {
@@ -21,13 +22,64 @@ export class ScrapeContentService {
     return dailyWebtoons;
   }
 
-  async scrapeNaverDailyWebtoons(url: string) {
+  async scrapeNaverDailyWebtoons(url: string): Promise<
+    Array<{
+      id: string;
+      title: string;
+      authors: Array<string>;
+      url: string;
+      thumbnailPath: string;
+      platform: 'naver' | 'kakao' | 'kakaopage';
+      updateDays: Array<string>;
+    }>
+  > {
     console.log('네이버 데일리 웹툰 콘텐츠 스크래핑 작업!!!');
     console.log(`타겟 url: ${url}`);
     // url에 대해 axios.get 요청
     const htmlData = await this.getHtmlData(url);
+    const $ = this.loadHtml(htmlData);
 
-    return htmlData;
+    const webtoonItemList = $(
+      '#ct > .section_list_toon > ul.list_toon > li.item > a',
+    );
+    const webtoons: Array<{
+      id: string;
+      title: string;
+      authors: Array<string>;
+      url: string;
+      thumbnailPath: string;
+      platform: 'naver' | 'kakao' | 'kakaopage';
+      updateDays: Array<string>;
+    }> = [];
+    console.log(`콘텐츠 개수: ${webtoonItemList.length}`);
+
+    for (const webtoonItem of webtoonItemList) {
+      const webtoonElem = $(webtoonItem);
+      const contentUrl = webtoonElem.attr('href');
+      const contentId = contentUrl.split('?titleId=')[1].split('&')[0];
+      const title = webtoonElem
+        .find('div.info > div > strong > span')
+        .text()
+        .trim();
+      const thumbnailPath = webtoonElem.find('.thumbnail img').attr('src');
+      const authors = webtoonElem
+        .find('div.info > span.author')
+        .text()
+        .replace(/\n/g, '')
+        .replace(/\t/g, '')
+        .split(' / ');
+      webtoons.push({
+        id: contentId,
+        title,
+        authors,
+        url: `https://m.comic.naver.com${contentUrl}`,
+        thumbnailPath,
+        platform: 'naver',
+        updateDays: ['daily'],
+      });
+    }
+
+    return webtoons;
   }
 
   async getHtmlData(url: string): Promise<string> {
@@ -38,5 +90,9 @@ export class ScrapeContentService {
       console.error(err);
       return err.message;
     }
+  }
+
+  loadHtml(html: string): cheerio.Root {
+    return load(html);
   }
 }
