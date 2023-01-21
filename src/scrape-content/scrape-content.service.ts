@@ -10,6 +10,12 @@ type Webtoon = {
   thumbnailPath: string;
   platform: 'naver' | 'kakao' | 'kakaopage';
   updateDays: Array<string>;
+  additional: {
+    isNew: boolean;
+    isAdult: boolean;
+    isPaused: boolean;
+    isUpdated: boolean;
+  };
 };
 
 @Injectable()
@@ -82,6 +88,13 @@ export class ScrapeContentService {
       .replace(/\n/g, '')
       .replace(/\t/g, '')
       .split(' / ');
+    const badgeAreaText = webtoonElem.find('span.area_badge').text();
+    const isNewWebtoon = badgeAreaText.includes('신작');
+    const isAdultWebtoon = badgeAreaText.includes('청유물');
+
+    const titleBoxText = webtoonElem.find('div.title_box').text();
+    const isPausedWebtoon = titleBoxText.includes('휴재');
+    const isUpdatedWebtoon = titleBoxText.includes('업데이트');
     return {
       id: contentId,
       title,
@@ -90,6 +103,12 @@ export class ScrapeContentService {
       thumbnailPath,
       platform: 'naver',
       updateDays: ['daily'],
+      additional: {
+        isNew: isNewWebtoon,
+        isAdult: isAdultWebtoon,
+        isPaused: isPausedWebtoon,
+        isUpdated: isUpdatedWebtoon,
+      },
     };
   }
 }
