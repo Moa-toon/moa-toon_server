@@ -16,6 +16,9 @@ type Webtoon = {
     isPaused: boolean;
     isUpdated: boolean;
   };
+  description?: string;
+  mainGenre?: string;
+  subGenre?: string;
 };
 
 @Injectable()
@@ -31,16 +34,42 @@ export class ScrapeContentService {
   }
 
   async getNaverWebtoons(baseUrl: string) {
-    // Daily 웹툰 콘텐츠 스크래핑
-    const dailyWebtoons = await this.scrapeNaverDailyWebtoons(
-      `${baseUrl}/weekday?week=dailyPlus`,
-    );
+    // Daily 웹툰 콘텐츠 간략 정보 스크래핑
+    const dailyWebtoonsSimpleData =
+      await this.scrapeNaverDailyWebtoonSimpleData(
+        `${baseUrl}/weekday?week=dailyPlus`,
+      );
+    // Daily 웹툰 콘텐츠 추가 정보 스크래핑
+    // Promise.all
+    const dailyWebtoonsAdditionalData =
+      await this.scrapeNaverDailyWebtoonsAdditionalData(
+        dailyWebtoonsSimpleData,
+      );
+
+    const dailyWebtoons: Webtoon[] = [];
+    for (let i = 0; i < dailyWebtoonsSimpleData.length; i++) {
+      const dailyWebtoonSimpleData = dailyWebtoonsSimpleData[i];
+
+      for (let j = i; j < dailyWebtoonsAdditionalData.length; j++) {
+        const dailyWebtoonAdditionalData = dailyWebtoonsAdditionalData[j];
+        if (dailyWebtoonSimpleData.url === dailyWebtoonAdditionalData.url) {
+          const dailyWebtoon = {
+            ...dailyWebtoonSimpleData,
+            ...dailyWebtoonAdditionalData,
+          };
+          console.log(dailyWebtoon);
+          dailyWebtoons.push(dailyWebtoon);
+          continue;
+        }
+      }
+    }
+
     return dailyWebtoons;
   }
 
-  async scrapeNaverDailyWebtoons(url: string): Promise<Array<Webtoon>> {
-    console.log('네이버 데일리 웹툰 콘텐츠 스크래핑 작업!!!');
-    console.log(`타겟 url: ${url}`);
+  async scrapeNaverDailyWebtoonSimpleData(
+    url: string,
+  ): Promise<Array<Webtoon>> {
     // url에 대해 axios.get 요청
     const htmlData = await this.getHtmlData(url);
     const $ = this.loadHtml(htmlData);
@@ -48,15 +77,57 @@ export class ScrapeContentService {
     const webtoonItemList = $(
       '#ct > .section_list_toon > ul.list_toon > li.item > a',
     );
-    const webtoons: Array<Webtoon> = [];
+    let webtoons: Array<Webtoon> = [];
     console.log(`콘텐츠 개수: ${webtoonItemList.length}`);
 
     for (const webtoonItem of webtoonItemList) {
-      const webtoon = this.getWebtoonItemInfo($, webtoonItem);
-      webtoons.push(webtoon);
+      const simpleInfo = await this.getWebtoonItemInfo($, webtoonItem);
+      webtoons.push(simpleInfo);
     }
 
     return webtoons;
+  }
+
+  async scrapeNaverDailyWebtoonsAdditionalData(
+    webtoons: Array<Webtoon>,
+  ): Promise<
+    Array<{
+      url: string;
+      description: string;
+      mainGenre: string;
+      subGenre: string;
+    }>
+  > {
+    return Promise.all(
+      webtoons.map((webtoon) =>
+        this.scrapeNaverDailyWebtoonAdditionalData(webtoon.url),
+      ),
+    );
+  }
+
+  async scrapeNaverDailyWebtoonAdditionalData(url: string): Promise<{
+    url: string;
+    description: string;
+    mainGenre: string;
+    subGenre: string;
+  }> {
+    // url에 대해 axios.get 요청
+    const htmlData = await this.getHtmlData(url);
+    const $ = this.loadHtml(htmlData);
+    const description = $('.section_toon_info .info_back > .summary > p')
+      .text()
+      .trim();
+    const mainGenre = $(
+      '.section_toon_info .info_back .detail .genre dd span.length',
+    )
+      .text()
+      .trim();
+    const subGenre = $(
+      '.section_toon_info .info_back .detail .genre dd ul.list_detail li',
+    )
+      .text()
+      .trim();
+    return { url, description, mainGenre, subGenre };
   }
 
   async getHtmlData(url: string): Promise<string> {
