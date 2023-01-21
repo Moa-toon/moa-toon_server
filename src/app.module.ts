@@ -6,6 +6,7 @@ import * as Joi from 'joi';
 import { getTypeOrmModule } from './common/utils/getTypeOrmModule';
 import { ContentsModule } from './modules/contents/contents.module';
 import { AdminModule } from './admin/admin.module';
+import { ScrapeContentModule } from './scrape-content/scrape-content.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AdminModule } from './admin/admin.module';
     getTypeOrmModule(),
     ContentsModule,
     AdminModule,
+    ScrapeContentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
