@@ -78,16 +78,20 @@ export class ScrapeContentService {
     // Daily 웹툰 콘텐츠 추가 정보 스크래핑
     // Promise.all
     const dailyWebtoonsAdditionalData =
-      await this.scrapeNaverDailyWebtoonsAdditionalData(
-        dailyWebtoonsSimpleData,
-      );
+      await this.scrapeNaverWebtoonsAdditionalData(dailyWebtoonsSimpleData);
+    const weeklyWebtoonsAdditionalData =
+      await this.scrapeNaverWebtoonsAdditionalData(weeklyWebtoonsSimpleData);
 
     const dailyWebtoons = this.makeWebtoonData(
       dailyWebtoonsSimpleData,
       dailyWebtoonsAdditionalData,
     );
+    const weeklyWebtoons = this.makeWebtoonData(
+      weeklyWebtoonsSimpleData,
+      weeklyWebtoonsAdditionalData,
+    );
 
-    return { weeklyWebtoonsSimpleData, dailyWebtoons };
+    return { weeklyWebtoons, dailyWebtoons };
   }
 
   makeWebtoonData(
@@ -148,23 +152,23 @@ export class ScrapeContentService {
     return result;
   }
 
-  async scrapeNaverDailyWebtoonsAdditionalData(
+  async scrapeNaverWebtoonsAdditionalData(
     webtoons: Array<WebtoonSimpleInfo>,
   ): Promise<Array<WebtoonAdditionalInfo>> {
     return Promise.all(
       webtoons.map((webtoon) =>
-        this.scrapeNaverDailyWebtoonAdditionalData(webtoon.url),
+        this.scrapeNaverWebtoonAdditionalData(webtoon.url),
       ),
     );
   }
 
-  async scrapeNaverDailyWebtoonAdditionalData(
+  async scrapeNaverWebtoonAdditionalData(
     url: string,
   ): Promise<WebtoonAdditionalInfo> {
     // url에 대해 axios.get 요청
     const htmlData = await this.getHtmlData(url);
     const $ = this.loadHtml(htmlData);
-    const summary = $('.section_toon_info .info_back > .summary').text().trim();
+    const summary = $('.section_toon_info .info_front .summary').text().trim();
     const description = $('.section_toon_info .info_back > .summary > p')
       .text()
       .trim();
@@ -183,7 +187,25 @@ export class ScrapeContentService {
 
   async getHtmlData(url: string): Promise<string> {
     try {
-      const html: { data: string } = await axios.get(url);
+      const axiosConfig = {
+        port: null, // port: 80
+        headers: {
+          authority: 'm.comic.naver.com',
+          scheme: 'https',
+          accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+          'accept-encoding': 'gzip, deflate, br',
+          'accept-language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+          'cache-control': 'no-cache',
+          'sec-fetch-dest': 'document',
+          'sec-fetch-mode': 'navigate',
+          'sec-fetch-site': 'same-origin',
+          'user-agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+          connection: 'keep-alive',
+        },
+      };
+      const html: { data: string } = await axios.get(url, axiosConfig);
       return html.data;
     } catch (err) {
       console.error(err);
