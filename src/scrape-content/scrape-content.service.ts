@@ -1,56 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { load } from 'cheerio';
-
-type WebtoonSimpleInfo = {
-  id: string;
-  title: string;
-  authors: Array<string>;
-  url: string;
-  thumbnailPath: string;
-  platform: 'naver' | 'kakao' | 'kakaopage';
-  updateDays: Array<string>;
-  additional: {
-    isNew: boolean;
-    isAdult: boolean;
-    isPaused: boolean;
-    isUpdated: boolean;
-  };
-};
-
-type WebtoonEpisodeInfo = {
-  name: string;
-  url: string;
-  thumbnailPath: string;
-  createDate: string;
-  isFree?: boolean;
-};
-
-type WebtoonAdditionalInfo = {
-  url: string;
-  summary: string;
-  description: string;
-  genres: Array<string>;
-  episodes: Array<WebtoonEpisodeInfo>;
-};
-
-type Webtoon = {
-  id: string;
-  title: string;
-  authors: Array<string>;
-  url: string;
-  thumbnailPath: string;
-  platform: 'naver' | 'kakao' | 'kakaopage';
-  updateDays: Array<string>;
-  additional: {
-    isNew: boolean;
-    isAdult: boolean;
-    isPaused: boolean;
-    isUpdated: boolean;
-  };
-  summary: string;
-  description: string;
-};
+import {
+  Webtoon,
+  WebtoonAdditionalInfo,
+  WebtoonEpisodeInfo,
+  WebtoonSimpleInfo,
+} from 'src/common/types/contents';
 
 @Injectable()
 export class ScrapeContentService {
@@ -71,8 +27,6 @@ export class ScrapeContentService {
       console.log('네이버 웹툰');
       return this.getNaverWebtoons(this.NAVER_WEBTOON_URL, updateDay);
     }
-
-    return platform;
   }
 
   async getNaverWebtoons(baseUrl: string, updateDay: string) {

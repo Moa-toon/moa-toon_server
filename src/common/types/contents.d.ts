@@ -46,4 +46,5 @@ export type Webtoon = {
   };
   summary: string;
   description: string;
+  genres: Array<string>;
 };

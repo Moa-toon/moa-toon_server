@@ -20,7 +20,8 @@ export class AdminController {
         platform,
         updateDay,
       );
-      this.contentsService.getGenres();
+      const genres = this.contentsService.getGenres(contents);
+      console.log(genres);
       return true;
     } catch (err) {
       console.error(err);
