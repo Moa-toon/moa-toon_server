@@ -49,6 +49,16 @@ type Webtoon = {
 @Injectable()
 export class ScrapeContentService {
   private readonly NAVER_WEBTOON_URL = 'https://m.comic.naver.com/webtoon';
+  private readonly weeklyDays = [
+    'mon',
+    'tue',
+    'wed',
+    'thu',
+    'fri',
+    'sat',
+    'sun',
+  ];
+
   async getContentsByPlatform(platform: string) {
     if (platform === 'naver') {
       console.log('네이버 웹툰');
@@ -60,10 +70,11 @@ export class ScrapeContentService {
 
   async getNaverWebtoons(baseUrl: string) {
     // Daily 웹툰 콘텐츠 간략 정보 스크래핑
-    const dailyWebtoonsSimpleData =
-      await this.scrapeNaverDailyWebtoonSimpleData(
-        `${baseUrl}/weekday?week=dailyPlus`,
-      );
+    const dailyWebtoonsSimpleData = await this.scrapeNaverWebtoonSimpleData(
+      `${baseUrl}/weekday?week=dailyPlus`,
+    );
+    const weeklyWebtoonsSimpleData =
+      await this.scrapeNaverWeeklyWebtoonsSimpleData(baseUrl, this.weeklyDays);
     // Daily 웹툰 콘텐츠 추가 정보 스크래핑
     // Promise.all
     const dailyWebtoonsAdditionalData =
@@ -76,7 +87,7 @@ export class ScrapeContentService {
       dailyWebtoonsAdditionalData,
     );
 
-    return dailyWebtoons;
+    return { weeklyWebtoonsSimpleData, dailyWebtoons };
   }
 
   makeWebtoonData(
@@ -102,7 +113,7 @@ export class ScrapeContentService {
     return webtoons;
   }
 
-  async scrapeNaverDailyWebtoonSimpleData(
+  async scrapeNaverWebtoonSimpleData(
     url: string,
   ): Promise<Array<WebtoonSimpleInfo>> {
     // url에 대해 axios.get 요청
@@ -121,6 +132,20 @@ export class ScrapeContentService {
     }
 
     return webtoons;
+  }
+
+  async scrapeNaverWeeklyWebtoonsSimpleData(
+    baseUrl: string,
+    weeklyDays: Array<string>,
+  ) {
+    const result: Array<WebtoonSimpleInfo> = [];
+    for (const day of weeklyDays) {
+      const daySimpleData = await this.scrapeNaverWebtoonSimpleData(
+        `${baseUrl}/weekday?week=${day}`,
+      );
+      result.push(...daySimpleData);
+    }
+    return result;
   }
 
   async scrapeNaverDailyWebtoonsAdditionalData(
