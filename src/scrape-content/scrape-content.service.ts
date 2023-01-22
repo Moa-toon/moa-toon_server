@@ -30,8 +30,7 @@ type WebtoonAdditionalInfo = {
   url: string;
   summary: string;
   description: string;
-  mainGenre: string;
-  subGenre: string;
+  genres: Array<string>;
   episodes: Array<WebtoonEpisodeInfo>;
 };
 
@@ -51,8 +50,6 @@ type Webtoon = {
   };
   summary: string;
   description: string;
-  mainGenre: string;
-  subGenre: string;
 };
 
 @Injectable()
@@ -78,11 +75,14 @@ export class ScrapeContentService {
     return platform;
   }
 
-  async getNaverWebtoons(baseUrl: string, updateDay) {
+  async getNaverWebtoons(baseUrl: string, updateDay: string) {
+    console.log(updateDay);
     if (updateDay === 'daily') {
+      console.log('데일리 웹툰 데이터 수집');
       // Daily 웹툰 콘텐츠 간략 정보 스크래핑
       const dailyWebtoonsSimpleData = await this.scrapeNaverWebtoonSimpleData(
         `${baseUrl}/weekday?week=dailyPlus`,
+        updateDay,
       );
       const dailyWebtoonsAdditionalData =
         await this.scrapeNaverWebtoonsAdditionalData(dailyWebtoonsSimpleData);
@@ -92,8 +92,12 @@ export class ScrapeContentService {
       );
       return dailyWebtoons;
     } else if (this.weeklyDays.includes(updateDay)) {
+      console.log('요일별 웹툰 데이터 수집');
       const weeklyDayWebtoonsSimpleData =
-        await this.scrapeNaverWeeklyDayWebtoonsSimpleData(baseUrl, updateDay);
+        await this.scrapeNaverWebtoonSimpleData(
+          `${baseUrl}/weekday?week=${updateDay}`,
+          updateDay,
+        );
 
       const weeklyDayWebtoonsAdditionalData =
         await this.scrapeNaverWebtoonsAdditionalData(
@@ -104,6 +108,7 @@ export class ScrapeContentService {
         weeklyDayWebtoonsSimpleData,
         weeklyDayWebtoonsAdditionalData,
       );
+      console.log(weeklyDayWebtoons.length);
       return weeklyDayWebtoons;
     } else if (updateDay === 'finished') {
       console.log('완결 웹툰 스크래핑 작업');
@@ -124,7 +129,7 @@ export class ScrapeContentService {
           const webtoon = {
             ...webtoonSimpleData,
             ...webtoonAdditionalData,
-          };
+          } as Webtoon;
           webtoons.push(webtoon);
           continue;
         }
@@ -135,6 +140,7 @@ export class ScrapeContentService {
 
   async scrapeNaverWebtoonSimpleData(
     url: string,
+    updateDay: string,
   ): Promise<Array<WebtoonSimpleInfo>> {
     // url에 대해 axios.get 요청
     const htmlData = await this.getHtmlData(url);
@@ -147,28 +153,14 @@ export class ScrapeContentService {
     console.log(`콘텐츠 개수: ${webtoonItemList.length}`);
 
     for (const webtoonItem of webtoonItemList) {
-      const simpleInfo = await this.getWebtoonItemInfo($, webtoonItem);
+      const simpleInfo = await this.getWebtoonItemInfo(
+        $,
+        webtoonItem,
+        updateDay,
+      );
       webtoons.push(simpleInfo);
     }
     return webtoons;
-  }
-
-  async scrapeNaverWeeklyWebtoonsSimpleData(
-    baseUrl: string,
-    weeklyDays: Array<string>,
-  ) {
-    const result: Array<WebtoonSimpleInfo> = [];
-    for (const day of weeklyDays) {
-      const daySimpleData = await this.scrapeNaverWebtoonSimpleData(
-        `${baseUrl}/weekday?week=${day}`,
-      );
-      result.push(...daySimpleData);
-    }
-    return result;
-  }
-
-  async scrapeNaverWeeklyDayWebtoonsSimpleData(baseUrl: string, day: string) {
-    return this.scrapeNaverWebtoonSimpleData(`${baseUrl}/weekday?week=${day}`);
   }
 
   async scrapeNaverWebtoonsAdditionalData(
@@ -231,7 +223,13 @@ export class ScrapeContentService {
     episodesOfAllPages.forEach((episodesOfPage) =>
       episodes.push(...episodesOfPage),
     );
-    return { url, summary, description, mainGenre, subGenre, episodes };
+    return {
+      url,
+      summary,
+      description,
+      genres: [mainGenre, subGenre],
+      episodes,
+    };
   }
 
   async getHtmlData(url: string): Promise<string> {
@@ -269,6 +267,7 @@ export class ScrapeContentService {
   getWebtoonItemInfo(
     $: cheerio.Root,
     element: cheerio.Element,
+    updateDay: string,
   ): WebtoonSimpleInfo {
     const webtoonElem = $(element);
     const contentUrl = webtoonElem.attr('href');
@@ -298,7 +297,7 @@ export class ScrapeContentService {
       url: `https://m.comic.naver.com${contentUrl}&sortOrder=ASC`,
       thumbnailPath,
       platform: 'naver',
-      updateDays: ['daily'],
+      updateDays: [updateDay],
       additional: {
         isNew: isNewWebtoon,
         isAdult: isAdultWebtoon,
