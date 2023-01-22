@@ -70,19 +70,50 @@ export class ContentsService {
         'kakaoPage',
       ];
       for (const platformName of platforms) {
-        const isAlreadyExist = await this.platformRepo.findBy({
+        const platformSelected = await this.platformRepo.findBy({
           name: platformName,
         });
-        console.log(isAlreadyExist);
+        console.log(platformSelected);
         console.log('이미 존재하는 플랫폼 정보');
-        if (isAlreadyExist) continue;
+        if (platformSelected.length > 0) continue;
         const platformSaved = await this.platformRepo.save(
           this.toPlatformEntity(platformName),
         );
         console.log(platformSaved);
       }
       // updateDay 정보 테이블에 저장
-      // await this.contentsService.saveUpdateDays()
+      const updateDays: Array<
+        | 'mon'
+        | 'tue'
+        | 'wed'
+        | 'thu'
+        | 'fri'
+        | 'sat'
+        | 'sun'
+        | 'daily'
+        | 'finished'
+      > = [
+        'mon',
+        'tue',
+        'wed',
+        'thu',
+        'fri',
+        'sat',
+        'sun',
+        'daily',
+        'finished',
+      ];
+      for (const updateDay of updateDays) {
+        const updateDaySelected = await this.updateDayRepo.findBy({
+          name: updateDay,
+        });
+        console.log('이미 존재하는 updateDay 데이터');
+        if (updateDaySelected.length > 0) continue;
+        const updateDaySaved = await this.updateDayRepo.save(
+          this.toUpdateDayEntity(updateDay),
+        );
+        console.log(updateDaySaved);
+      }
       return true;
     } catch (err) {
       console.error(err);
@@ -94,5 +125,22 @@ export class ContentsService {
     const platform = new Platform();
     platform.name = name;
     return platform;
+  }
+
+  toUpdateDayEntity(
+    name:
+      | 'mon'
+      | 'tue'
+      | 'wed'
+      | 'thu'
+      | 'fri'
+      | 'sat'
+      | 'sun'
+      | 'daily'
+      | 'finished',
+  ) {
+    const updateDay = new UpdateDay();
+    updateDay.name = name;
+    return updateDay;
   }
 }
