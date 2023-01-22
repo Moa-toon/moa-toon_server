@@ -18,12 +18,21 @@ type WebtoonSimpleInfo = {
   };
 };
 
+type WebtoonEpisodeInfo = {
+  name: string;
+  url: string;
+  thumbnailPath: string;
+  createDate: string;
+  isFree?: boolean;
+};
+
 type WebtoonAdditionalInfo = {
   url: string;
   summary: string;
   description: string;
   mainGenre: string;
   subGenre: string;
+  episodes: Array<WebtoonEpisodeInfo>;
 };
 
 type Webtoon = {
@@ -48,6 +57,7 @@ type Webtoon = {
 
 @Injectable()
 export class ScrapeContentService {
+  private readonly NAVER_WEBTOON_BASE_URL = 'https://m.comic.naver.com';
   private readonly NAVER_WEBTOON_URL = 'https://m.comic.naver.com/webtoon';
   private readonly weeklyDays = [
     'mon',
@@ -59,39 +69,45 @@ export class ScrapeContentService {
     'sun',
   ];
 
-  async getContentsByPlatform(platform: string) {
+  async getContentsByPlatform(platform: string, updateDay: string) {
     if (platform === 'naver') {
       console.log('네이버 웹툰');
-      return this.getNaverWebtoons(this.NAVER_WEBTOON_URL);
+      return this.getNaverWebtoons(this.NAVER_WEBTOON_URL, updateDay);
     }
 
     return platform;
   }
 
-  async getNaverWebtoons(baseUrl: string) {
-    // Daily 웹툰 콘텐츠 간략 정보 스크래핑
-    const dailyWebtoonsSimpleData = await this.scrapeNaverWebtoonSimpleData(
-      `${baseUrl}/weekday?week=dailyPlus`,
-    );
-    const weeklyWebtoonsSimpleData =
-      await this.scrapeNaverWeeklyWebtoonsSimpleData(baseUrl, this.weeklyDays);
-    // Daily 웹툰 콘텐츠 추가 정보 스크래핑
-    // Promise.all
-    const dailyWebtoonsAdditionalData =
-      await this.scrapeNaverWebtoonsAdditionalData(dailyWebtoonsSimpleData);
-    const weeklyWebtoonsAdditionalData =
-      await this.scrapeNaverWebtoonsAdditionalData(weeklyWebtoonsSimpleData);
+  async getNaverWebtoons(baseUrl: string, updateDay) {
+    if (updateDay === 'daily') {
+      // Daily 웹툰 콘텐츠 간략 정보 스크래핑
+      const dailyWebtoonsSimpleData = await this.scrapeNaverWebtoonSimpleData(
+        `${baseUrl}/weekday?week=dailyPlus`,
+      );
+      const dailyWebtoonsAdditionalData =
+        await this.scrapeNaverWebtoonsAdditionalData(dailyWebtoonsSimpleData);
+      const dailyWebtoons = this.makeWebtoonData(
+        dailyWebtoonsSimpleData,
+        dailyWebtoonsAdditionalData,
+      );
+      return dailyWebtoons;
+    } else if (this.weeklyDays.includes(updateDay)) {
+      const weeklyDayWebtoonsSimpleData =
+        await this.scrapeNaverWeeklyDayWebtoonsSimpleData(baseUrl, updateDay);
 
-    const dailyWebtoons = this.makeWebtoonData(
-      dailyWebtoonsSimpleData,
-      dailyWebtoonsAdditionalData,
-    );
-    const weeklyWebtoons = this.makeWebtoonData(
-      weeklyWebtoonsSimpleData,
-      weeklyWebtoonsAdditionalData,
-    );
+      const weeklyDayWebtoonsAdditionalData =
+        await this.scrapeNaverWebtoonsAdditionalData(
+          weeklyDayWebtoonsSimpleData,
+        );
 
-    return { weeklyWebtoons, dailyWebtoons };
+      const weeklyDayWebtoons = this.makeWebtoonData(
+        weeklyDayWebtoonsSimpleData,
+        weeklyDayWebtoonsAdditionalData,
+      );
+      return weeklyDayWebtoons;
+    } else if (updateDay === 'finished') {
+      console.log('완결 웹툰 스크래핑 작업');
+    }
   }
 
   makeWebtoonData(
@@ -134,7 +150,6 @@ export class ScrapeContentService {
       const simpleInfo = await this.getWebtoonItemInfo($, webtoonItem);
       webtoons.push(simpleInfo);
     }
-
     return webtoons;
   }
 
@@ -150,6 +165,10 @@ export class ScrapeContentService {
       result.push(...daySimpleData);
     }
     return result;
+  }
+
+  async scrapeNaverWeeklyDayWebtoonsSimpleData(baseUrl: string, day: string) {
+    return this.scrapeNaverWebtoonSimpleData(`${baseUrl}/weekday?week=${day}`);
   }
 
   async scrapeNaverWebtoonsAdditionalData(
@@ -182,7 +201,37 @@ export class ScrapeContentService {
     )
       .text()
       .trim();
-    return { url, summary, description, mainGenre, subGenre };
+    const pageCount = $('#ct > div.paging_type2 > em > span').text();
+
+    // 회차 정보 수집
+    const episodes = [];
+    const episodeItemList = $('#ct > ul.section_episode_list li.item');
+    for (const episodeItem of episodeItemList) {
+      const episodeInfo = this.getWebtoonEpisode($, episodeItem);
+      episodes.push(episodeInfo);
+    }
+
+    const pages = Array.from({ length: parseInt(pageCount) }, (v, i) => i + 2);
+    const episodesOfAllPages = await Promise.all(
+      pages.map(async (page) => {
+        return (async () => {
+          const episodesOfPage: Array<WebtoonEpisodeInfo> = [];
+          const htmlData = await this.getHtmlData(`${url}&page=${page}`);
+          const $ = this.loadHtml(htmlData);
+
+          const episodeItemList = $('#ct > ul.section_episode_list li.item');
+          for (const episodeItem of episodeItemList) {
+            const episodeInfo = this.getWebtoonEpisode($, episodeItem);
+            episodesOfPage.push(episodeInfo);
+          }
+          return episodesOfPage;
+        })();
+      }),
+    );
+    episodesOfAllPages.forEach((episodesOfPage) =>
+      episodes.push(...episodesOfPage),
+    );
+    return { url, summary, description, mainGenre, subGenre, episodes };
   }
 
   async getHtmlData(url: string): Promise<string> {
@@ -246,7 +295,7 @@ export class ScrapeContentService {
       id: contentId,
       title,
       authors,
-      url: `https://m.comic.naver.com${contentUrl}`,
+      url: `https://m.comic.naver.com${contentUrl}&sortOrder=ASC`,
       thumbnailPath,
       platform: 'naver',
       updateDays: ['daily'],
@@ -256,6 +305,29 @@ export class ScrapeContentService {
         isPaused: isPausedWebtoon,
         isUpdated: isUpdatedWebtoon,
       },
+    };
+  }
+
+  getWebtoonEpisode(
+    $: cheerio.Root,
+    element: cheerio.Element,
+  ): WebtoonEpisodeInfo {
+    const name = $(element).find('div.info .name strong').text().trim();
+    const additionalUrl = $(element).find('a').attr('href');
+    const thumbnailPath = $(element).find('div.thumbnail img').attr('src');
+    const createDate = $(element)
+      .find('div.info div.detail .date')
+      .text()
+      .trim();
+    const isFree =
+      $(element).find('div.thumbnail > span > span').text().trim() !==
+      '유료만화';
+    return {
+      name,
+      url: `${this.NAVER_WEBTOON_BASE_URL}${additionalUrl}`,
+      thumbnailPath,
+      createDate,
+      isFree,
     };
   }
 }
