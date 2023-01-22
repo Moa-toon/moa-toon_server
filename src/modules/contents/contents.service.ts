@@ -9,7 +9,6 @@ export class ContentsService {
     main: string;
     sub: Set<string>;
   }> {
-    console.log('getGenres 메서드 호출!!!');
     const genres = new Array<{
       main: string;
       sub: Set<string>;
@@ -41,5 +40,15 @@ export class ContentsService {
       }
     }
     return genres;
+  }
+
+  getAuthors(webtoons: Array<Webtoon>): Set<string> {
+    const authors = new Set<string>();
+    for (const webtoon of webtoons) {
+      for (const author of webtoon.authors) {
+        if (author !== '' && !authors.has(author)) authors.add(author);
+      }
+    }
+    return authors;
   }
 }

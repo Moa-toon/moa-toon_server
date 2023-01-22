@@ -21,7 +21,9 @@ export class AdminController {
         updateDay,
       );
       const genres = this.contentsService.getGenres(contents);
+      const authors = this.contentsService.getAuthors(contents);
       console.log(genres);
+      console.log(authors);
       return true;
     } catch (err) {
       console.error(err);
