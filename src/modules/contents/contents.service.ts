@@ -1,9 +1,18 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Webtoon } from 'src/common/types/contents';
+import { Repository } from 'typeorm';
+import { Platform } from './entities/Platform';
+import { UpdateDay } from './entities/UpdateDay';
 
 @Injectable()
 export class ContentsService {
-  constructor() {}
+  constructor(
+    @InjectRepository(Platform)
+    private readonly platformRepo: Repository<Platform>,
+    @InjectRepository(UpdateDay)
+    private readonly updateDayRepo: Repository<UpdateDay>,
+  ) {}
 
   getGenres(webtoons: Array<Webtoon>): Array<{
     main: string;
@@ -50,5 +59,40 @@ export class ContentsService {
       }
     }
     return authors;
+  }
+
+  async initContentsTbl() {
+    try {
+      // platform 정보 테이블에 저장
+      const platforms: Array<'kakao' | 'naver' | 'kakaoPage'> = [
+        'kakao',
+        'naver',
+        'kakaoPage',
+      ];
+      for (const platformName of platforms) {
+        const isAlreadyExist = await this.platformRepo.findBy({
+          name: platformName,
+        });
+        console.log(isAlreadyExist);
+        console.log('이미 존재하는 플랫폼 정보');
+        if (isAlreadyExist) continue;
+        const platformSaved = await this.platformRepo.save(
+          this.toPlatformEntity(platformName),
+        );
+        console.log(platformSaved);
+      }
+      // updateDay 정보 테이블에 저장
+      // await this.contentsService.saveUpdateDays()
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  }
+
+  toPlatformEntity(name: 'kakao' | 'naver' | 'kakaoPage') {
+    const platform = new Platform();
+    platform.name = name;
+    return platform;
   }
 }
