@@ -2,6 +2,30 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { load } from 'cheerio';
 
+type WebtoonSimpleInfo = {
+  id: string;
+  title: string;
+  authors: Array<string>;
+  url: string;
+  thumbnailPath: string;
+  platform: 'naver' | 'kakao' | 'kakaopage';
+  updateDays: Array<string>;
+  additional: {
+    isNew: boolean;
+    isAdult: boolean;
+    isPaused: boolean;
+    isUpdated: boolean;
+  };
+};
+
+type WebtoonAdditionalInfo = {
+  url: string;
+  summary: string;
+  description: string;
+  mainGenre: string;
+  subGenre: string;
+};
+
 type Webtoon = {
   id: string;
   title: string;
@@ -16,9 +40,10 @@ type Webtoon = {
     isPaused: boolean;
     isUpdated: boolean;
   };
-  description?: string;
-  mainGenre?: string;
-  subGenre?: string;
+  summary: string;
+  description: string;
+  mainGenre: string;
+  subGenre: string;
 };
 
 @Injectable()
@@ -46,30 +71,40 @@ export class ScrapeContentService {
         dailyWebtoonsSimpleData,
       );
 
-    const dailyWebtoons: Webtoon[] = [];
-    for (let i = 0; i < dailyWebtoonsSimpleData.length; i++) {
-      const dailyWebtoonSimpleData = dailyWebtoonsSimpleData[i];
-
-      for (let j = i; j < dailyWebtoonsAdditionalData.length; j++) {
-        const dailyWebtoonAdditionalData = dailyWebtoonsAdditionalData[j];
-        if (dailyWebtoonSimpleData.url === dailyWebtoonAdditionalData.url) {
-          const dailyWebtoon = {
-            ...dailyWebtoonSimpleData,
-            ...dailyWebtoonAdditionalData,
-          };
-          console.log(dailyWebtoon);
-          dailyWebtoons.push(dailyWebtoon);
-          continue;
-        }
-      }
-    }
+    const dailyWebtoons = this.makeWebtoonData(
+      dailyWebtoonsSimpleData,
+      dailyWebtoonsAdditionalData,
+    );
 
     return dailyWebtoons;
   }
 
+  makeWebtoonData(
+    simpleData: Array<WebtoonSimpleInfo>,
+    additionalData: Array<WebtoonAdditionalInfo>,
+  ): Array<Webtoon> {
+    const webtoons: Webtoon[] = [];
+    for (let i = 0; i < simpleData.length; i++) {
+      const webtoonSimpleData = simpleData[i];
+
+      for (let j = i; j < additionalData.length; j++) {
+        const webtoonAdditionalData = additionalData[j];
+        if (webtoonSimpleData.url === webtoonAdditionalData.url) {
+          const webtoon = {
+            ...webtoonSimpleData,
+            ...webtoonAdditionalData,
+          };
+          webtoons.push(webtoon);
+          continue;
+        }
+      }
+    }
+    return webtoons;
+  }
+
   async scrapeNaverDailyWebtoonSimpleData(
     url: string,
-  ): Promise<Array<Webtoon>> {
+  ): Promise<Array<WebtoonSimpleInfo>> {
     // url에 대해 axios.get 요청
     const htmlData = await this.getHtmlData(url);
     const $ = this.loadHtml(htmlData);
@@ -77,7 +112,7 @@ export class ScrapeContentService {
     const webtoonItemList = $(
       '#ct > .section_list_toon > ul.list_toon > li.item > a',
     );
-    let webtoons: Array<Webtoon> = [];
+    let webtoons: Array<WebtoonSimpleInfo> = [];
     console.log(`콘텐츠 개수: ${webtoonItemList.length}`);
 
     for (const webtoonItem of webtoonItemList) {
@@ -89,15 +124,8 @@ export class ScrapeContentService {
   }
 
   async scrapeNaverDailyWebtoonsAdditionalData(
-    webtoons: Array<Webtoon>,
-  ): Promise<
-    Array<{
-      url: string;
-      description: string;
-      mainGenre: string;
-      subGenre: string;
-    }>
-  > {
+    webtoons: Array<WebtoonSimpleInfo>,
+  ): Promise<Array<WebtoonAdditionalInfo>> {
     return Promise.all(
       webtoons.map((webtoon) =>
         this.scrapeNaverDailyWebtoonAdditionalData(webtoon.url),
@@ -105,15 +133,13 @@ export class ScrapeContentService {
     );
   }
 
-  async scrapeNaverDailyWebtoonAdditionalData(url: string): Promise<{
-    url: string;
-    description: string;
-    mainGenre: string;
-    subGenre: string;
-  }> {
+  async scrapeNaverDailyWebtoonAdditionalData(
+    url: string,
+  ): Promise<WebtoonAdditionalInfo> {
     // url에 대해 axios.get 요청
     const htmlData = await this.getHtmlData(url);
     const $ = this.loadHtml(htmlData);
+    const summary = $('.section_toon_info .info_back > .summary').text().trim();
     const description = $('.section_toon_info .info_back > .summary > p')
       .text()
       .trim();
@@ -127,7 +153,7 @@ export class ScrapeContentService {
     )
       .text()
       .trim();
-    return { url, description, mainGenre, subGenre };
+    return { url, summary, description, mainGenre, subGenre };
   }
 
   async getHtmlData(url: string): Promise<string> {
@@ -144,7 +170,10 @@ export class ScrapeContentService {
     return load(html);
   }
 
-  getWebtoonItemInfo($: cheerio.Root, element: cheerio.Element): Webtoon {
+  getWebtoonItemInfo(
+    $: cheerio.Root,
+    element: cheerio.Element,
+  ): WebtoonSimpleInfo {
     const webtoonElem = $(element);
     const contentUrl = webtoonElem.attr('href');
     const contentId = contentUrl.split('?titleId=')[1].split('&')[0];
