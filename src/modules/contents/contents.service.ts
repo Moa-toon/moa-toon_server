@@ -7,6 +7,7 @@ import {
   Webtoon,
 } from 'src/common/types/contents';
 import { Repository } from 'typeorm';
+import { Genre } from './entities/Genre';
 import { Platform } from './entities/Platform';
 import { UpdateDay } from './entities/UpdateDay';
 
@@ -17,6 +18,8 @@ export class ContentsService {
     private readonly platformRepo: Repository<Platform>,
     @InjectRepository(UpdateDay)
     private readonly updateDayRepo: Repository<UpdateDay>,
+    @InjectRepository(Genre)
+    private readonly genreRepo: Repository<Genre>,
   ) {}
 
   getGenres(webtoons: Array<Webtoon>): Array<GenreInfo> {
@@ -110,15 +113,45 @@ export class ContentsService {
     }
   }
 
-  toPlatformEntity(name: 'kakao' | 'naver' | 'kakaoPage') {
+  async saveGenres(genres: Array<GenreInfo>): Promise<boolean> {
+    try {
+      for (const genre of genres) {
+        const { main, sub } = genre;
+
+        const genreSelected = await this.genreRepo.findOneBy({ name: main });
+        for (const subItem of sub) {
+          await this.saveGenre(
+            this.toGenreEntity(subItem, genreSelected?.idx ?? undefined),
+          );
+        }
+      }
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  }
+
+  async saveGenre(genre: Genre): Promise<Genre> {
+    return this.genreRepo.save(genre);
+  }
+
+  toPlatformEntity(name: PlatformType): Platform {
     const platform = new Platform();
     platform.name = name;
     return platform;
   }
 
-  toUpdateDayEntity(name: UpdateDayCode) {
+  toUpdateDayEntity(name: UpdateDayCode): UpdateDay {
     const updateDay = new UpdateDay();
     updateDay.name = name;
     return updateDay;
+  }
+
+  toGenreEntity(name: string, parentIdx: number = 0): Genre {
+    const genre = new Genre();
+    genre.name = name;
+    genre.parentIdx = parentIdx;
+    return genre;
   }
 }
