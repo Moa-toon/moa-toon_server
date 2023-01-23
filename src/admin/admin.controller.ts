@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Query } from '@nestjs/common';
 import { writeFileSync } from 'fs';
+import { PlatformType, UpdateDayCode } from 'src/common/types/contents';
 import { ContentsService } from 'src/modules/contents/contents.service';
 import { ScrapeContentService } from 'src/scrape-content/scrape-content.service';
 
@@ -12,8 +13,8 @@ export class AdminController {
 
   @Get('/contents')
   async getContentsByPlatform(
-    @Query('platform') platform: string,
-    @Query('updateDay') updateDay: string,
+    @Query('platform') platform: PlatformType,
+    @Query('updateDay') updateDay: UpdateDayCode,
   ) {
     try {
       const contents = await this.scrapeContentService.getContentsByPlatform(

@@ -10,6 +10,12 @@ export enum UpdateDayCode {
   finished = 'finished',
 }
 
+export enum PlatformType {
+  naver = 'naver',
+  kakao = 'kakao',
+  kakaoPage = 'kakaoPage',
+}
+
 export type WebtoonSimpleInfo = {
   id: string;
   title: string;

@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { load } from 'cheerio';
 import {
+  PlatformType,
+  UpdateDayCode,
   Webtoon,
   WebtoonAdditionalInfo,
   WebtoonEpisodeInfo,
@@ -22,14 +24,17 @@ export class ScrapeContentService {
     'sun',
   ];
 
-  async getContentsByPlatform(platform: string, updateDay: string) {
+  async getContentsByPlatform(
+    platform: PlatformType,
+    updateDay: UpdateDayCode,
+  ) {
     if (platform === 'naver') {
       console.log('네이버 웹툰');
       return this.getNaverWebtoons(this.NAVER_WEBTOON_URL, updateDay);
     }
   }
 
-  async getNaverWebtoons(baseUrl: string, updateDay: string) {
+  async getNaverWebtoons(baseUrl: string, updateDay: UpdateDayCode) {
     console.log(updateDay);
     if (updateDay === 'daily') {
       console.log('데일리 웹툰 데이터 수집');
@@ -94,7 +99,7 @@ export class ScrapeContentService {
 
   async scrapeNaverWebtoonSimpleData(
     url: string,
-    updateDay: string,
+    updateDay: UpdateDayCode,
   ): Promise<Array<WebtoonSimpleInfo>> {
     // url에 대해 axios.get 요청
     const htmlData = await this.getHtmlData(url);
@@ -221,7 +226,7 @@ export class ScrapeContentService {
   getWebtoonItemInfo(
     $: cheerio.Root,
     element: cheerio.Element,
-    updateDay: string,
+    updateDay: UpdateDayCode,
   ): WebtoonSimpleInfo {
     const webtoonElem = $(element);
     const contentUrl = webtoonElem.attr('href');
@@ -250,7 +255,7 @@ export class ScrapeContentService {
       authors,
       url: `https://m.comic.naver.com${contentUrl}&sortOrder=ASC`,
       thumbnailPath,
-      platform: 'naver',
+      platform: PlatformType.naver,
       updateDays: [updateDay],
       additional: {
         isNew: isNewWebtoon,

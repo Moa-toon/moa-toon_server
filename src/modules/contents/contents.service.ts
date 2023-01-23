@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UpdateDayCode, Webtoon } from 'src/common/types/contents';
+import {
+  PlatformType,
+  UpdateDayCode,
+  Webtoon,
+} from 'src/common/types/contents';
 import { Repository } from 'typeorm';
 import { Platform } from './entities/Platform';
 import { UpdateDay } from './entities/UpdateDay';
@@ -64,10 +68,10 @@ export class ContentsService {
   async initContentsTbl() {
     try {
       // platform 정보 테이블에 저장
-      const platforms: Array<'kakao' | 'naver' | 'kakaoPage'> = [
-        'kakao',
-        'naver',
-        'kakaoPage',
+      const platforms: Array<PlatformType> = [
+        PlatformType.naver,
+        PlatformType.kakao,
+        PlatformType.kakaoPage,
       ];
       for (const platformName of platforms) {
         const platformSelected = await this.platformRepo.findBy({
