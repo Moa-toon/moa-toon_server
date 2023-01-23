@@ -1,3 +1,15 @@
+export enum UpdateDayCode {
+  monday = 'mon',
+  tuesday = 'tue',
+  wednesday = 'wed',
+  thursday = 'thu',
+  friday = 'fri',
+  saturday = 'sat',
+  sunday = 'sun',
+  daily = 'daily',
+  finished = 'finished',
+}
+
 export type WebtoonSimpleInfo = {
   id: string;
   title: string;
@@ -30,21 +42,4 @@ export type WebtoonAdditionalInfo = {
   episodes: Array<WebtoonEpisodeInfo>;
 };
 
-export type Webtoon = {
-  id: string;
-  title: string;
-  authors: Array<string>;
-  url: string;
-  thumbnailPath: string;
-  platform: 'naver' | 'kakao' | 'kakaopage';
-  updateDays: Array<string>;
-  additional: {
-    isNew: boolean;
-    isAdult: boolean;
-    isPaused: boolean;
-    isUpdated: boolean;
-  };
-  summary: string;
-  description: string;
-  genres: Array<string>;
-};
+export type Webtoon = WebtoonSimpleInfo & WebtoonAdditionalInfo;

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Webtoon } from 'src/common/types/contents';
+import { UpdateDayCode, Webtoon } from 'src/common/types/contents';
 import { Repository } from 'typeorm';
 import { Platform } from './entities/Platform';
 import { UpdateDay } from './entities/UpdateDay';
@@ -82,26 +82,16 @@ export class ContentsService {
         console.log(platformSaved);
       }
       // updateDay 정보 테이블에 저장
-      const updateDays: Array<
-        | 'mon'
-        | 'tue'
-        | 'wed'
-        | 'thu'
-        | 'fri'
-        | 'sat'
-        | 'sun'
-        | 'daily'
-        | 'finished'
-      > = [
-        'mon',
-        'tue',
-        'wed',
-        'thu',
-        'fri',
-        'sat',
-        'sun',
-        'daily',
-        'finished',
+      const updateDays: Array<UpdateDayCode> = [
+        UpdateDayCode.monday,
+        UpdateDayCode.tuesday,
+        UpdateDayCode.wednesday,
+        UpdateDayCode.thursday,
+        UpdateDayCode.friday,
+        UpdateDayCode.saturday,
+        UpdateDayCode.sunday,
+        UpdateDayCode.daily,
+        UpdateDayCode.finished,
       ];
       for (const updateDay of updateDays) {
         const updateDaySelected = await this.updateDayRepo.findBy({
@@ -127,18 +117,7 @@ export class ContentsService {
     return platform;
   }
 
-  toUpdateDayEntity(
-    name:
-      | 'mon'
-      | 'tue'
-      | 'wed'
-      | 'thu'
-      | 'fri'
-      | 'sat'
-      | 'sun'
-      | 'daily'
-      | 'finished',
-  ) {
+  toUpdateDayEntity(name: UpdateDayCode) {
     const updateDay = new UpdateDay();
     updateDay.name = name;
     return updateDay;
