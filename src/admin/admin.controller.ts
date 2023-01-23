@@ -27,6 +27,8 @@ export class AdminController {
       const authors = this.contentsService.getAuthors(contents);
       // genre 저장
       await this.contentsService.saveGenres(genres);
+      // authors 저장
+      await this.contentsService.saveAuthors(authors);
       console.log(genres);
       console.log(authors);
       return true;

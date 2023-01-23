@@ -7,6 +7,7 @@ import {
   Webtoon,
 } from 'src/common/types/contents';
 import { Repository } from 'typeorm';
+import { Author } from './entities/Author';
 import { Genre } from './entities/Genre';
 import { Platform } from './entities/Platform';
 import { UpdateDay } from './entities/UpdateDay';
@@ -20,6 +21,8 @@ export class ContentsService {
     private readonly updateDayRepo: Repository<UpdateDay>,
     @InjectRepository(Genre)
     private readonly genreRepo: Repository<Genre>,
+    @InjectRepository(Author)
+    private readonly authorRepo: Repository<Author>,
   ) {}
 
   getGenres(webtoons: Array<Webtoon>): Array<GenreInfo> {
@@ -136,6 +139,26 @@ export class ContentsService {
     return this.genreRepo.save(genre);
   }
 
+  async saveAuthors(authors: Set<string>) {
+    try {
+      for (const authorName of authors) {
+        const authorSelected = await this.authorRepo.findOneBy({
+          name: authorName,
+        });
+        if (authorSelected) continue;
+        await this.saveAuthor(authorName);
+      }
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  }
+
+  async saveAuthor(name: string): Promise<Author> {
+    return this.authorRepo.save(this.toAuthorEntity(name));
+  }
+
   toPlatformEntity(name: PlatformType): Platform {
     const platform = new Platform();
     platform.name = name;
@@ -153,5 +176,12 @@ export class ContentsService {
     genre.name = name;
     genre.parentIdx = parentIdx;
     return genre;
+  }
+
+  toAuthorEntity(name: string, type: number = 0): Author {
+    const author = new Author();
+    author.name = name;
+    author.type = type;
+    return author;
   }
 }
