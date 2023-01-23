@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  GenreInfo,
   PlatformType,
   UpdateDayCode,
   Webtoon,
@@ -18,14 +19,8 @@ export class ContentsService {
     private readonly updateDayRepo: Repository<UpdateDay>,
   ) {}
 
-  getGenres(webtoons: Array<Webtoon>): Array<{
-    main: string;
-    sub: Set<string>;
-  }> {
-    const genres = new Array<{
-      main: string;
-      sub: Set<string>;
-    }>();
+  getGenres(webtoons: Array<Webtoon>): Array<GenreInfo> {
+    const genres = new Array<GenreInfo>();
 
     for (const webtoon of webtoons) {
       // webtoon.genres

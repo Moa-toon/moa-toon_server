@@ -48,4 +48,9 @@ export type WebtoonAdditionalInfo = {
   episodes: Array<WebtoonEpisodeInfo>;
 };
 
+export type GenreInfo = {
+  main: string;
+  sub: Set<string>;
+};
+
 export type Webtoon = WebtoonSimpleInfo & WebtoonAdditionalInfo;
