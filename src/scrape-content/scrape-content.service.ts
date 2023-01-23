@@ -9,6 +9,7 @@ import {
   WebtoonEpisodeInfo,
   WebtoonSimpleInfo,
 } from 'src/common/types/contents';
+import { getAgeLimit } from 'src/common/utils/getAgeLimit';
 
 @Injectable()
 export class ScrapeContentService {
@@ -152,6 +153,10 @@ export class ScrapeContentService {
     )
       .text()
       .trim();
+    const ageLimitText = $(
+      '#ct > div.section_toon_info > div.info_back > dl > div.week_day > dd > ul.property.list_detail.age > li',
+    ).text();
+    const ageLimit = getAgeLimit(ageLimitText);
     const pageCount = $('#ct > div.paging_type2 > em > span').text();
 
     // 회차 정보 수집
@@ -183,6 +188,7 @@ export class ScrapeContentService {
       episodes.push(...episodesOfPage),
     );
     return {
+      ageLimit,
       url,
       summary,
       description,

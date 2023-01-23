@@ -22,8 +22,8 @@ export type WebtoonSimpleInfo = {
   authors: Array<string>;
   url: string;
   thumbnailPath: string;
-  platform: 'naver' | 'kakao' | 'kakaopage';
-  updateDays: Array<string>;
+  platform: PlatformType;
+  updateDays: Array<UpdateDayCode>;
   additional: {
     isNew: boolean;
     isAdult: boolean;
@@ -41,6 +41,7 @@ export type WebtoonEpisodeInfo = {
 };
 
 export type WebtoonAdditionalInfo = {
+  ageLimit: number;
   url: string;
   summary: string;
   description: string;
