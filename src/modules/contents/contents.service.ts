@@ -120,12 +120,19 @@ export class ContentsService {
     try {
       for (const genre of genres) {
         const { main, sub } = genre;
+        let mainGenreIdx;
+        const mainGenreSelected = await this.findGenreByName(main);
+        if (mainGenreSelected) mainGenreIdx = mainGenreSelected.idx;
+        else {
+          const mainGenreSaved = await this.saveGenre(this.toGenreEntity(main));
+          mainGenreIdx = mainGenreSaved.idx;
+        }
 
-        const genreSelected = await this.genreRepo.findOneBy({ name: main });
         for (const subItem of sub) {
-          await this.saveGenre(
-            this.toGenreEntity(subItem, genreSelected?.idx ?? undefined),
-          );
+          const subGenreSelected = await this.findGenreByName(subItem);
+          if (subGenreSelected) continue;
+
+          await this.saveGenre(this.toGenreEntity(subItem, mainGenreIdx));
         }
       }
       return true;
@@ -135,6 +142,10 @@ export class ContentsService {
     }
   }
 
+  async findGenreByName(name: string): Promise<Genre> {
+    return this.genreRepo.findOneBy({ name });
+  }
+
   async saveGenre(genre: Genre): Promise<Genre> {
     return this.genreRepo.save(genre);
   }
@@ -142,9 +153,7 @@ export class ContentsService {
   async saveAuthors(authors: Set<string>) {
     try {
       for (const authorName of authors) {
-        const authorSelected = await this.authorRepo.findOneBy({
-          name: authorName,
-        });
+        const authorSelected = await this.findAuthorByName(authorName);
         if (authorSelected) continue;
         await this.saveAuthor(authorName);
       }
@@ -153,6 +162,10 @@ export class ContentsService {
       console.error(err);
       return false;
     }
+  }
+
+  async findAuthorByName(name: string): Promise<Author> {
+    return this.authorRepo.findOneBy({ name });
   }
 
   async saveAuthor(name: string): Promise<Author> {

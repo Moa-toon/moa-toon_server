@@ -37,7 +37,7 @@ export type WebtoonEpisodeInfo = {
   url: string;
   thumbnailPath: string;
   createDate: string;
-  isFree?: boolean;
+  isFree: boolean;
 };
 
 export type WebtoonAdditionalInfo = {
