@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ContentsController } from './contents.controller';
 import { ContentsService } from './contents.service';
 import { Author } from './entities/Author';
 import { Content } from './entities/Content';
@@ -23,6 +24,7 @@ import { UpdateDay } from './entities/UpdateDay';
       ContentUpdateDay,
     ]),
   ],
+  controllers: [ContentsController],
   providers: [ContentsService],
   exports: [ContentsService],
 })

@@ -257,6 +257,7 @@ export class ScrapeContentService {
     const isUpdatedWebtoon = titleBoxText.includes('업데이트');
     return {
       id: contentId,
+      type: 0,
       title,
       authors,
       url: `https://m.comic.naver.com${contentUrl}&sortOrder=ASC`,

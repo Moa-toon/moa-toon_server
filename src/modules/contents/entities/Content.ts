@@ -17,8 +17,17 @@ export class Content {
   @PrimaryGeneratedColumn({ type: 'int', name: 'idx', comment: '인덱스' })
   idx: number;
 
+  @Column('tinyint', {
+    name: 'type',
+    comment: '콘텐츠 타입(0: 웹툰, 1: 웹소설)',
+  })
+  type: number;
+
   @Column('varchar', { name: 'title', comment: '제목', length: 100 })
   title: string;
+
+  @Column('varchar', { name: 'summary', comment: '줄거리 요약', length: 200 })
+  summary: string;
 
   @Column('text', { name: 'description', comment: '줄거리' })
   description: string;
@@ -87,26 +96,35 @@ export class Content {
   })
   finishedAt: Date | null;
 
-  @ManyToOne(() => Platform, (platform) => platform.Contents)
+  @ManyToOne(() => Platform, (platform) => platform.Contents, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'platformIdx', referencedColumnName: 'idx' })
   Platform: Platform;
 
-  @OneToMany(() => ContentGenre, (contentGenres) => contentGenres.Content)
+  @OneToMany(() => ContentGenre, (contentGenres) => contentGenres.Content, {
+    cascade: true,
+  })
   ContentGenres: ContentGenre[];
 
-  @OneToMany(() => ContentAuthor, (contentAuthors) => contentAuthors.Content)
+  @OneToMany(() => ContentAuthor, (contentAuthors) => contentAuthors.Content, {
+    cascade: true,
+  })
   ContentAuthors: ContentAuthor[];
 
   @OneToMany(
     () => ContentUpdateDay,
     (contentUpdateDays) => contentUpdateDays.Content,
+    { cascade: true },
   )
   ContentUpdateDays: ContentUpdateDay[];
 
   static from(content: Webtoon, platform: Platform): Content {
     const contentEntity = new Content();
+    contentEntity.type = content.type;
     contentEntity.idx = parseInt(content.id);
     contentEntity.title = content.title;
+    contentEntity.summary = content.summary;
     contentEntity.description = content.description;
     contentEntity.urlOfMobile = content.url;
     contentEntity.isAdult = content.additional.isAdult;

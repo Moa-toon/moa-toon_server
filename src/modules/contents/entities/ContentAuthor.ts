@@ -10,10 +10,15 @@ export class ContentAuthor {
   @Column('int', { primary: true, name: 'authorIdx' })
   AuthorIdx: number;
 
-  @ManyToOne(() => Content, (content) => content.ContentAuthors)
+  @ManyToOne(() => Content, (content) => content.ContentAuthors, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   Content: Content;
 
-  @ManyToOne(() => Author, (author) => author.ContentAuthors)
+  @ManyToOne(() => Author, (author) => author.ContentAuthors, {
+    onDelete: 'CASCADE',
+  })
   Author: Author;
 
   static from(content: Content, author: Author): ContentAuthor {

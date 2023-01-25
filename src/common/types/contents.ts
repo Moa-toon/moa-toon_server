@@ -16,8 +16,14 @@ export enum PlatformType {
   kakaoPage = 'kakaoPage',
 }
 
+export enum ContentType {
+  webtoon = 'webtoon',
+  webNovel = 'webNovel',
+}
+
 export type WebtoonSimpleInfo = {
   id: string;
+  type: number;
   title: string;
   authors: Array<string>;
   url: string;
