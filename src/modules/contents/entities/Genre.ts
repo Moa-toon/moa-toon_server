@@ -18,4 +18,11 @@ export class Genre {
 
   @OneToMany(() => ContentGenre, (contentGenres) => contentGenres.Genre)
   ContentGenres: ContentGenre[];
+
+  static from(name: string, parentIdx: number = 0): Genre {
+    const genre = new Genre();
+    genre.name = name;
+    genre.parentIdx = parentIdx;
+    return genre;
+  }
 }

@@ -1,3 +1,4 @@
+import { Webtoon } from 'src/common/types/contents';
 import {
   Column,
   Entity,
@@ -25,20 +26,26 @@ export class Content {
   @Column('tinyint', { name: 'ageLimit', comment: '나이 제한' })
   ageLimit: number;
 
-  @Column('varchar', { name: 'urlOfPc', comment: 'PC 버전 url', length: 100 })
+  @Column('varchar', {
+    name: 'urlOfPc',
+    comment: 'PC 버전 url',
+    length: 100,
+    nullable: true,
+  })
   urlOfPc: string;
 
   @Column('varchar', {
     name: 'urlOfMobile',
     comment: 'Mobile 버전 url',
     length: 100,
+    nullable: true,
   })
   urlOfMobile: string;
 
   @Column('varchar', {
     name: 'thumbnailPath',
     comment: '썸네일 이미지 경로',
-    length: 100,
+    length: 255,
   })
   thumbnailPath: string;
 
@@ -95,4 +102,24 @@ export class Content {
     (contentUpdateDays) => contentUpdateDays.Content,
   )
   ContentUpdateDays: ContentUpdateDay[];
+
+  static from(content: Webtoon, platform: Platform): Content {
+    const contentEntity = new Content();
+    contentEntity.idx = parseInt(content.id);
+    contentEntity.title = content.title;
+    contentEntity.description = content.description;
+    contentEntity.urlOfMobile = content.url;
+    contentEntity.isAdult = content.additional.isAdult;
+    contentEntity.isNew = content.additional.isNew;
+    contentEntity.isPaused = content.additional.isPaused;
+    contentEntity.isUpdated = content.additional.isUpdated;
+    contentEntity.thumbnailPath = content.thumbnailPath;
+    contentEntity.ageLimit = content.ageLimit;
+    contentEntity.startedAt =
+      content.episodes.length > 0
+        ? new Date(`20${content.episodes[0].createDate}`)
+        : new Date(Date.now());
+    contentEntity.Platform = platform;
+    return contentEntity;
+  }
 }

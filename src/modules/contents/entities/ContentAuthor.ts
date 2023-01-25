@@ -15,4 +15,11 @@ export class ContentAuthor {
 
   @ManyToOne(() => Author, (author) => author.ContentAuthors)
   Author: Author;
+
+  static from(content: Content, author: Author): ContentAuthor {
+    const contentAuthor = new ContentAuthor();
+    contentAuthor.Content = content;
+    contentAuthor.Author = author;
+    return contentAuthor;
+  }
 }

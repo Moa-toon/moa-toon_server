@@ -1,3 +1,4 @@
+import { UpdateDayCode } from 'src/common/types/contents';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Content } from './Content';
 import { ContentUpdateDay } from './ContentUpdateDay';
@@ -8,20 +9,17 @@ export class UpdateDay {
   idx: number;
 
   @Column('varchar', { name: 'name', comment: '업데이트 요일 값', length: 8 })
-  name:
-    | 'mon'
-    | 'tue'
-    | 'wed'
-    | 'thu'
-    | 'fri'
-    | 'sat'
-    | 'sun'
-    | 'daily'
-    | 'finished';
+  name: UpdateDayCode;
 
   @OneToMany(
     () => ContentUpdateDay,
     (contentupdateDays) => contentupdateDays.UpdateDay,
   )
   ContentUpdateDays: ContentUpdateDay[];
+
+  static from(name: UpdateDayCode): UpdateDay {
+    const updateDay = new UpdateDay();
+    updateDay.name = name;
+    return updateDay;
+  }
 }

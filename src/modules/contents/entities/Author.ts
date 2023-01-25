@@ -14,4 +14,11 @@ export class Author {
 
   @OneToMany(() => ContentAuthor, (contentAuthors) => contentAuthors.Author)
   ContentAuthors: ContentAuthor[];
+
+  static from(name: string, type: number = 0): Author {
+    const author = new Author();
+    author.name = name;
+    author.type = type;
+    return author;
+  }
 }
