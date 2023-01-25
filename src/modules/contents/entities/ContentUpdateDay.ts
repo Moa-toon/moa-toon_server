@@ -10,10 +10,14 @@ export class ContentUpdateDay {
   @Column('int', { primary: true, name: 'updateDayIdx' })
   UpdateDayIdx: number;
 
-  @ManyToOne(() => Content, (content) => content.ContentUpdateDays)
+  @ManyToOne(() => Content, (content) => content.ContentUpdateDays, {
+    onDelete: 'CASCADE',
+  })
   Content: Content;
 
-  @ManyToOne(() => UpdateDay, (updateDay) => updateDay.ContentUpdateDays)
+  @ManyToOne(() => UpdateDay, (updateDay) => updateDay.ContentUpdateDays, {
+    onDelete: 'CASCADE',
+  })
   UpdateDay: UpdateDay;
 
   static from(content: Content, updateDay: UpdateDay): ContentUpdateDay {

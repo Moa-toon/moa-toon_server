@@ -10,10 +10,14 @@ export class ContentGenre {
   @Column('int', { primary: true, name: 'contentIdx' })
   ContentIdx: number;
 
-  @ManyToOne(() => Genre, (genre) => genre.ContentGenres)
+  @ManyToOne(() => Genre, (genre) => genre.ContentGenres, {
+    onDelete: 'CASCADE',
+  })
   Genre: Genre;
 
-  @ManyToOne(() => Content, (content) => content.ContentGenres)
+  @ManyToOne(() => Content, (content) => content.ContentGenres, {
+    onDelete: 'CASCADE',
+  })
   Content: Content;
 
   static from(content: Content, genre: Genre): ContentGenre {

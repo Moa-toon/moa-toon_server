@@ -87,7 +87,9 @@ export class Content {
   })
   finishedAt: Date | null;
 
-  @ManyToOne(() => Platform, (platform) => platform.Contents)
+  @ManyToOne(() => Platform, (platform) => platform.Contents, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'platformIdx', referencedColumnName: 'idx' })
   Platform: Platform;
 
