@@ -6,7 +6,7 @@ import {
   UpdateDayCode,
   Webtoon,
 } from 'src/common/types/contents';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Author } from './entities/Author';
 import { Content } from './entities/Content';
 import { ContentAuthor } from './entities/ContentAuthor';
@@ -35,6 +35,7 @@ export class ContentsService {
     private readonly contentUpdateDayRepo: Repository<ContentUpdateDay>,
     @InjectRepository(ContentGenre)
     private readonly contentGenreRepo: Repository<ContentGenre>,
+    private dataSource: DataSource,
   ) {}
 
   getGenres(webtoons: Array<Webtoon>): Array<GenreInfo> {
@@ -79,53 +80,50 @@ export class ContentsService {
   }
 
   async initContentsTbl() {
-    try {
-      // platform 정보 테이블에 저장
-      const platforms: Array<PlatformType> = [
-        PlatformType.naver,
-        PlatformType.kakao,
-        PlatformType.kakaoPage,
-      ];
-      for (const platformName of platforms) {
-        const platformSelected = await this.platformRepo.findBy({
-          name: platformName,
-        });
-        console.log(platformSelected);
-        console.log('이미 존재하는 플랫폼 정보');
-        if (platformSelected.length > 0) continue;
-        const platformSaved = await this.platformRepo.save(
-          Platform.from(platformName),
-        );
-        console.log(platformSaved);
-      }
-      // updateDay 정보 테이블에 저장
-      const updateDays: Array<UpdateDayCode> = [
-        UpdateDayCode.monday,
-        UpdateDayCode.tuesday,
-        UpdateDayCode.wednesday,
-        UpdateDayCode.thursday,
-        UpdateDayCode.friday,
-        UpdateDayCode.saturday,
-        UpdateDayCode.sunday,
-        UpdateDayCode.daily,
-        UpdateDayCode.finished,
-      ];
-      for (const updateDayName of updateDays) {
-        const updateDaySelected = await this.updateDayRepo.findBy({
-          name: updateDayName,
-        });
-        console.log('이미 존재하는 updateDay 데이터');
-        if (updateDaySelected.length > 0) continue;
-        const updateDaySaved = await this.updateDayRepo.save(
-          UpdateDay.from(updateDayName),
-        );
-        console.log(updateDaySaved);
-      }
-      return true;
-    } catch (err) {
-      console.error(err);
-      return false;
-    }
+    return this.dataSource.manager
+      .transaction(async (manager) => {
+        const platformRepo = manager.withRepository(this.platformRepo);
+        const updateDayRepo = manager.withRepository(this.updateDayRepo);
+
+        // platform 정보 테이블에 저장
+        const platforms: Array<PlatformType> = [
+          PlatformType.naver,
+          PlatformType.kakao,
+          PlatformType.kakaoPage,
+        ];
+        for (const platformName of platforms) {
+          const platformSelected = await platformRepo.findOneBy({
+            name: platformName,
+          });
+          if (platformSelected) continue;
+          await platformRepo.save(Platform.from(platformName));
+        }
+
+        // updateDay 정보 테이블에 저장
+        const updateDays: Array<UpdateDayCode> = [
+          UpdateDayCode.monday,
+          UpdateDayCode.tuesday,
+          UpdateDayCode.wednesday,
+          UpdateDayCode.thursday,
+          UpdateDayCode.friday,
+          UpdateDayCode.saturday,
+          UpdateDayCode.sunday,
+          UpdateDayCode.daily,
+          UpdateDayCode.finished,
+        ];
+        for (const updateDayName of updateDays) {
+          const updateDaySelected = await this.updateDayRepo.findOneBy({
+            name: updateDayName,
+          });
+          if (updateDaySelected) continue;
+          await updateDayRepo.save(UpdateDay.from(updateDayName));
+        }
+        return true;
+      })
+      .catch((err) => {
+        console.error(err);
+        return false;
+      });
   }
 
   async saveGenres(genres: Array<GenreInfo>): Promise<boolean> {
