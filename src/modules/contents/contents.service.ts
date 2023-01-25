@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  ContentType,
   GenreInfo,
   PlatformType,
   UpdateDayCode,
   Webtoon,
 } from 'src/common/types/contents';
+import { getContentType } from 'src/common/utils/getContentType';
 import { DataSource, Repository } from 'typeorm';
 import { GetContentsReqQueryDto } from './dto/request';
 import { ContentPaginationData, PaginationMetaData } from './dto/response';
@@ -314,6 +316,7 @@ export class ContentsService {
         'ContentUpdateDays.UpdateDay',
       ],
       where: {
+        type: getContentType(type),
         Platform: {
           name: platform,
         },
@@ -327,17 +330,20 @@ export class ContentsService {
       skip: take * (page - 1),
     });
 
-    const items = contents.map((content) => ({
-      idx: content.idx,
-      title: content.title,
-      summary: content.summary ?? '',
-      ageLimit: content.ageLimit,
-      pageUrl: content.urlOfMobile,
-      thumbnailUrl: content.thumbnailPath,
-      isNew: content.isNew,
-      isAdult: content.isAdult,
-      isUpdated: content.isUpdated,
-    }));
+    const items =
+      contents.length > 0
+        ? contents.map((content) => ({
+            idx: content.idx,
+            title: content.title,
+            summary: content.summary ?? '',
+            ageLimit: content.ageLimit,
+            pageUrl: content.urlOfMobile,
+            thumbnailUrl: content.thumbnailPath,
+            isNew: content.isNew,
+            isAdult: content.isAdult,
+            isUpdated: content.isUpdated,
+          }))
+        : [];
     const meta: PaginationMetaData = {
       totalCount,
       pageCount: Math.ceil(totalCount / take),
