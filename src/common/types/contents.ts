@@ -23,6 +23,7 @@ export enum ContentType {
 
 export type WebtoonSimpleInfo = {
   id: string;
+  type: number;
   title: string;
   authors: Array<string>;
   url: string;
