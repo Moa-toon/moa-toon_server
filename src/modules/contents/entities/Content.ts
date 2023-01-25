@@ -121,8 +121,10 @@ export class Content {
 
   static from(content: Webtoon, platform: Platform): Content {
     const contentEntity = new Content();
+    contentEntity.type = content.type;
     contentEntity.idx = parseInt(content.id);
     contentEntity.title = content.title;
+    contentEntity.summary = content.summary;
     contentEntity.description = content.description;
     contentEntity.urlOfMobile = content.url;
     contentEntity.isAdult = content.additional.isAdult;
