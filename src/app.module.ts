@@ -7,6 +7,7 @@ import { getTypeOrmModule } from './common/utils/getTypeOrmModule';
 import { ContentsModule } from './modules/contents/contents.module';
 import { AdminModule } from './admin/admin.module';
 import { ScrapeContentModule } from './scrape-content/scrape-content.module';
+import { ContentsController } from './modules/contents/contents.controller';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { ScrapeContentModule } from './scrape-content/scrape-content.module';
     AdminModule,
     ScrapeContentModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, ContentsController],
   providers: [AppService],
 })
 export class AppModule {}

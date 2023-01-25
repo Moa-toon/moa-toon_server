@@ -7,6 +7,8 @@ import {
   Webtoon,
 } from 'src/common/types/contents';
 import { DataSource, Repository } from 'typeorm';
+import { GetContentsReqQueryDto } from './dto/request';
+import { ContentPaginationData, PaginationMetaData } from './dto/response';
 import { Author } from './entities/Author';
 import { Content } from './entities/Content';
 import { ContentAuthor } from './entities/ContentAuthor';
@@ -293,6 +295,64 @@ export class ContentsService {
         console.error(error);
         return false;
       });
+  }
+
+  async getContents(
+    query: GetContentsReqQueryDto,
+  ): Promise<ContentPaginationData> {
+    const { type, platform, updateDay, page, take } = query;
+
+    const [contents, totalCount] = await this.contentRepo.findAndCount({
+      select: {
+        idx: true,
+        title: true,
+        description: true,
+        thumbnailPath: true,
+        urlOfMobile: true,
+        ageLimit: true,
+        isUpdated: true,
+        isNew: true,
+        isAdult: true,
+      },
+      relations: [
+        'Platform',
+        'ContentUpdateDays',
+        'ContentUpdateDays.UpdateDay',
+      ],
+      where: {
+        Platform: {
+          name: platform,
+        },
+        ContentUpdateDays: {
+          UpdateDay: {
+            name: updateDay,
+          },
+        },
+      },
+      take: take,
+      skip: take * (page - 1),
+    });
+
+    const items = contents.map((content) => ({
+      idx: content.idx,
+      title: content.title,
+      description: content.description,
+      ageLimit: content.ageLimit,
+      pageUrl: content.urlOfMobile,
+      thumbnailUrl: content.thumbnailPath,
+      isNew: content.isNew,
+      isAdult: content.isAdult,
+      isUpdated: content.isUpdated,
+    }));
+    const meta: PaginationMetaData = {
+      totalCount,
+      pageCount: Math.ceil(totalCount / take),
+    };
+
+    return {
+      items,
+      meta,
+    };
   }
 
   async findUpdateDayByName(name: UpdateDayCode): Promise<UpdateDay> {
