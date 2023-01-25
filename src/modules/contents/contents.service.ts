@@ -306,7 +306,7 @@ export class ContentsService {
       select: {
         idx: true,
         title: true,
-        description: true,
+        summary: true,
         thumbnailPath: true,
         urlOfMobile: true,
         ageLimit: true,
@@ -336,7 +336,7 @@ export class ContentsService {
     const items = contents.map((content) => ({
       idx: content.idx,
       title: content.title,
-      description: content.description,
+      summary: content.summary ?? '',
       ageLimit: content.ageLimit,
       pageUrl: content.urlOfMobile,
       thumbnailUrl: content.thumbnailPath,

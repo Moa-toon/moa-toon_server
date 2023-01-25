@@ -15,9 +15,9 @@ abstract class Content {
 
   @ApiProperty({
     type: String,
-    description: '줄거리',
+    description: '줄거리 요약',
   })
-  description: string;
+  summary: string;
 
   @ApiProperty({
     type: Number,
