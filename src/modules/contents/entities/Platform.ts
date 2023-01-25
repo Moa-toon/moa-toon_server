@@ -1,3 +1,4 @@
+import { PlatformType } from 'src/common/types/contents';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Content } from './Content';
 
@@ -7,7 +8,7 @@ export class Platform {
   idx: number;
 
   @Column('varchar', { name: 'name', comment: '플랫폼 이름', length: 30 })
-  name: 'naver' | 'kakao' | 'kakaoPage';
+  name: PlatformType;
 
   @OneToMany(() => Content, (content) => content.Platform)
   Contents: Content[];

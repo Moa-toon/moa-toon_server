@@ -25,20 +25,26 @@ export class Content {
   @Column('tinyint', { name: 'ageLimit', comment: '나이 제한' })
   ageLimit: number;
 
-  @Column('varchar', { name: 'urlOfPc', comment: 'PC 버전 url', length: 100 })
+  @Column('varchar', {
+    name: 'urlOfPc',
+    comment: 'PC 버전 url',
+    length: 100,
+    nullable: true,
+  })
   urlOfPc: string;
 
   @Column('varchar', {
     name: 'urlOfMobile',
     comment: 'Mobile 버전 url',
     length: 100,
+    nullable: true,
   })
   urlOfMobile: string;
 
   @Column('varchar', {
     name: 'thumbnailPath',
     comment: '썸네일 이미지 경로',
-    length: 100,
+    length: 255,
   })
   thumbnailPath: string;
 
