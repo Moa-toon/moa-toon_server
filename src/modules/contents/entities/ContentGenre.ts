@@ -17,6 +17,7 @@ export class ContentGenre {
 
   @ManyToOne(() => Content, (content) => content.ContentGenres, {
     onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
   })
   Content: Content;
 

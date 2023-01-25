@@ -166,7 +166,7 @@ export class ContentsService {
     }
   }
 
-  async saveContents(contents: Array<Webtoon>) {
+  async saveContents(contents: Array<Webtoon>): Promise<boolean> {
     try {
       for (const content of contents) {
         const contentSelected = await this.findContentByTitle(content.title);
@@ -179,91 +179,120 @@ export class ContentsService {
     }
   }
 
-  async saveContent(content: Webtoon) {
-    try {
-      // platform
-      let platform: Platform;
-      const platformSelected = await this.findPlatformByName(content.platform);
-      if (platformSelected) platform = platformSelected;
-      else {
-        const platformSaved = await this.savePlatform(
-          Platform.from(content.platform),
-        );
-        platform = platformSaved;
-      }
+  async saveContent(content: Webtoon): Promise<boolean> {
+    return this.dataSource.manager
+      .transaction(async (manager) => {
+        const platformRepo = manager.withRepository(this.platformRepo);
+        const updateDayRepo = manager.withRepository(this.updateDayRepo);
+        const authorRepo = manager.withRepository(this.authorRepo);
+        const genreRepo = manager.withRepository(this.genreRepo);
+        const contentRepo = manager.withRepository(this.contentRepo);
 
-      // updateDays
-      const updateDaysSelected: Array<UpdateDay> = [];
-      for (const updateDayName of content.updateDays) {
-        const updateDaySelected = await this.findUpdateDayByName(updateDayName);
-        if (updateDaySelected) updateDaysSelected.push(updateDaySelected);
+        // platform
+        let platform: Platform;
+        const platformSelected = await platformRepo.findOneBy({
+          name: content.platform,
+        });
+        if (platformSelected) platform = platformSelected;
         else {
-          // updateDay 정보 저장
-          const updateDaySaved = await this.saveUpdateDay(
-            UpdateDay.from(updateDayName),
+          const platformSaved = await platformRepo.save(
+            Platform.from(content.platform),
           );
-          updateDaysSelected.push(updateDaySaved);
+          platform = platformSaved;
         }
-      }
-      // authors
-      const authorsSelected: Array<Author> = [];
-      for (const author of content.authors) {
-        const authorSelected = await this.findAuthorByName(author);
-        if (authorSelected) authorsSelected.push(authorSelected);
-        else {
-          // author 정보 저장
-          const authorSaved = await this.saveAuthor(Author.from(author));
-          authorsSelected.push(authorSaved);
+        // updateDays
+        const updateDaysSelected: Array<UpdateDay> = [];
+        for (const updateDayName of content.updateDays) {
+          const updateDaySelected = await updateDayRepo.findOneBy({
+            name: updateDayName,
+          });
+          if (updateDaySelected) updateDaysSelected.push(updateDaySelected);
+          else {
+            // updateDay 정보 저장
+            const updateDaySaved = await updateDayRepo.save(
+              UpdateDay.from(updateDayName),
+            );
+            updateDaysSelected.push(updateDaySaved);
+          }
         }
-      }
-      // genres
-      const genresSelected: Array<Genre> = [];
-      const [main, ...sub] = content.genres;
-      let mainGenre: Genre;
-      const mainGenreSelected = await this.findGenreByName(main);
-      if (mainGenreSelected) mainGenre = mainGenreSelected;
-      else {
-        // mainGenre 정보 저장
-        const mainGenreSaved = await this.saveGenre(Genre.from(main));
-        mainGenre = mainGenreSaved;
-      }
-      genresSelected.push(mainGenre);
+        // authors
+        const authorsSelected: Array<Author> = [];
+        for (const author of content.authors) {
+          const authorSelected = await authorRepo.findOneBy({
+            name: author,
+          });
+          if (authorSelected) authorsSelected.push(authorSelected);
+          else {
+            // author 정보 저장
+            const authorSaved = await authorRepo.save(Author.from(author));
+            authorsSelected.push(authorSaved);
+          }
+        }
 
-      for (const genre of sub) {
-        const subGenreSelected = await this.findGenreByName(genre);
-        if (subGenreSelected) genresSelected.push(subGenreSelected);
+        // genres
+        const genresSelected: Array<Genre> = [];
+        const [main, ...sub] = content.genres;
+        let mainGenre: Genre;
+        const mainGenreSelected = await genreRepo.findOneBy({
+          name: main,
+        });
+        if (mainGenreSelected) mainGenre = mainGenreSelected;
         else {
-          // subGenre 정보 저장
-          const subGenreSaved = await this.saveGenre(
-            Genre.from(genre, mainGenre.idx),
+          // mainGenre 정보 저장
+          const mainGenreSaved = await genreRepo.save(Genre.from(main));
+          mainGenre = mainGenreSaved;
+        }
+        genresSelected.push(mainGenre);
+
+        for (const genre of sub) {
+          let subGenre: Genre;
+          const subGenreSelected = await genreRepo.findOneBy({
+            name: genre,
+          });
+          if (subGenreSelected) subGenre = subGenreSelected;
+          else {
+            // subGenre 정보 저장
+            const subGenreSaved = await genreRepo.save(
+              Genre.from(genre, mainGenre.idx),
+            );
+            subGenre = subGenreSaved;
+          }
+          genresSelected.push(subGenre);
+        }
+
+        const contentToSave = Content.from(content, platform);
+
+        // contentAuthor
+        const contentAuthors: Array<ContentAuthor> = [];
+        for (const author of authorsSelected) {
+          contentAuthors.push(ContentAuthor.from(contentToSave, author));
+        }
+
+        // contentGenre
+        const contentGenres: Array<ContentGenre> = [];
+        for (const genre of genresSelected) {
+          contentGenres.push(ContentGenre.from(contentToSave, genre));
+        }
+
+        // contentUpdateDay
+        const contentUpdateDays: Array<ContentUpdateDay> = [];
+        for (const updateDay of updateDaysSelected) {
+          contentUpdateDays.push(
+            ContentUpdateDay.from(contentToSave, updateDay),
           );
-          genresSelected.push(subGenreSaved);
         }
-      }
-      const contentSaved = await this.saveContentEntity(
-        Content.from(content, platform),
-      );
-      // contentAuthor
-      for (const author of authorsSelected) {
-        await this.saveContentAuthor(ContentAuthor.from(contentSaved, author));
-      }
 
-      // contentGenre
-      for (const genre of genresSelected) {
-        await this.saveContentGenre(ContentGenre.from(contentSaved, genre));
-      }
+        contentToSave.ContentAuthors = contentAuthors;
+        contentToSave.ContentGenres = contentGenres;
+        contentToSave.ContentUpdateDays = contentUpdateDays;
 
-      // contentUpdateDay
-      for (const updateDay of updateDaysSelected) {
-        await this.saveContentUpdateDay(
-          ContentUpdateDay.from(contentSaved, updateDay),
-        );
-      }
-      return true;
-    } catch (err) {
-      console.error(err);
-      return false;
-    }
+        await contentRepo.save(contentToSave);
+        return true;
+      })
+      .catch((error) => {
+        console.error(error);
+        return false;
+      });
   }
 
   async findUpdateDayByName(name: UpdateDayCode): Promise<UpdateDay> {

@@ -12,6 +12,7 @@ export class ContentAuthor {
 
   @ManyToOne(() => Content, (content) => content.ContentAuthors, {
     onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
   })
   Content: Content;
 

@@ -93,15 +93,20 @@ export class Content {
   @JoinColumn({ name: 'platformIdx', referencedColumnName: 'idx' })
   Platform: Platform;
 
-  @OneToMany(() => ContentGenre, (contentGenres) => contentGenres.Content)
+  @OneToMany(() => ContentGenre, (contentGenres) => contentGenres.Content, {
+    cascade: true,
+  })
   ContentGenres: ContentGenre[];
 
-  @OneToMany(() => ContentAuthor, (contentAuthors) => contentAuthors.Content)
+  @OneToMany(() => ContentAuthor, (contentAuthors) => contentAuthors.Content, {
+    cascade: true,
+  })
   ContentAuthors: ContentAuthor[];
 
   @OneToMany(
     () => ContentUpdateDay,
     (contentUpdateDays) => contentUpdateDays.Content,
+    { cascade: true },
   )
   ContentUpdateDays: ContentUpdateDay[];
 
