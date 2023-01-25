@@ -29,8 +29,8 @@ export class AdminController {
       await this.contentsService.saveGenres(genres);
       // authors 저장
       await this.contentsService.saveAuthors(authors);
-      console.log(genres);
-      console.log(authors);
+      // contents 저장
+      await this.contentsService.saveContents(contents);
       return true;
     } catch (err) {
       console.error(err);
