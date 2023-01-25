@@ -15,4 +15,11 @@ export class ContentGenre {
 
   @ManyToOne(() => Content, (content) => content.ContentGenres)
   Content: Content;
+
+  static from(content: Content, genre: Genre): ContentGenre {
+    const contentGenre = new ContentGenre();
+    contentGenre.Content = content;
+    contentGenre.Genre = genre;
+    return contentGenre;
+  }
 }

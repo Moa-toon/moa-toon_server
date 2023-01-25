@@ -15,4 +15,11 @@ export class ContentUpdateDay {
 
   @ManyToOne(() => UpdateDay, (updateDay) => updateDay.ContentUpdateDays)
   UpdateDay: UpdateDay;
+
+  static from(content: Content, updateDay: UpdateDay): ContentUpdateDay {
+    const contentUpdateDay = new ContentUpdateDay();
+    contentUpdateDay.Content = content;
+    contentUpdateDay.UpdateDay = updateDay;
+    return contentUpdateDay;
+  }
 }

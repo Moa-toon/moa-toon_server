@@ -12,4 +12,10 @@ export class Platform {
 
   @OneToMany(() => Content, (content) => content.Platform)
   Contents: Content[];
+
+  static from(name: PlatformType): Platform {
+    const platform = new Platform();
+    platform.name = name;
+    return platform;
+  }
 }

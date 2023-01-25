@@ -16,4 +16,10 @@ export class UpdateDay {
     (contentupdateDays) => contentupdateDays.UpdateDay,
   )
   ContentUpdateDays: ContentUpdateDay[];
+
+  static from(name: UpdateDayCode): UpdateDay {
+    const updateDay = new UpdateDay();
+    updateDay.name = name;
+    return updateDay;
+  }
 }
