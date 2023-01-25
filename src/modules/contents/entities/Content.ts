@@ -17,8 +17,17 @@ export class Content {
   @PrimaryGeneratedColumn({ type: 'int', name: 'idx', comment: '인덱스' })
   idx: number;
 
+  @Column('tinyint', {
+    name: 'type',
+    comment: '콘텐츠 타입(0: 웹툰, 1: 웹소설)',
+  })
+  type: number;
+
   @Column('varchar', { name: 'title', comment: '제목', length: 100 })
   title: string;
+
+  @Column('varchar', { name: 'summary', comment: '줄거리 요약', length: 200 })
+  summary: string;
 
   @Column('text', { name: 'description', comment: '줄거리' })
   description: string;
