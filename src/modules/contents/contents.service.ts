@@ -31,12 +31,6 @@ export class ContentsService {
     private readonly authorRepo: Repository<Author>,
     @InjectRepository(Content)
     private readonly contentRepo: Repository<Content>,
-    @InjectRepository(ContentAuthor)
-    private readonly contentAuthorRepo: Repository<ContentAuthor>,
-    @InjectRepository(ContentUpdateDay)
-    private readonly contentUpdateDayRepo: Repository<ContentUpdateDay>,
-    @InjectRepository(ContentGenre)
-    private readonly contentGenreRepo: Repository<ContentGenre>,
     private dataSource: DataSource,
   ) {}
 
@@ -393,21 +387,5 @@ export class ContentsService {
 
   async saveAuthor(author: Author): Promise<Author> {
     return this.authorRepo.save(author);
-  }
-
-  async saveContentAuthor(
-    contentAuthor: ContentAuthor,
-  ): Promise<ContentAuthor> {
-    return this.contentAuthorRepo.save(contentAuthor);
-  }
-
-  async saveContentUpdateDay(
-    contentUpdateDay: ContentUpdateDay,
-  ): Promise<ContentUpdateDay> {
-    return this.contentUpdateDayRepo.save(contentUpdateDay);
-  }
-
-  async saveContentGenre(contentGenre: ContentGenre): Promise<ContentGenre> {
-    return this.contentGenreRepo.save(contentGenre);
   }
 }
