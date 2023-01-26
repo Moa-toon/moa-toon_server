@@ -451,6 +451,19 @@ export class ContentsService {
     });
   }
 
+  async getContentsId(): Promise<Array<number>> {
+    const contentsSelected = await this.contentRepo.find({
+      select: {
+        idx: true,
+      },
+    });
+    const ids =
+      contentsSelected.length > 0
+        ? contentsSelected.map((content) => content.idx)
+        : [];
+    return ids;
+  }
+
   async findUpdateDayByName(name: UpdateDayCode): Promise<UpdateDay> {
     return this.updateDayRepo.findOneBy({ name });
   }

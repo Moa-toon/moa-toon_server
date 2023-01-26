@@ -1,15 +1,8 @@
-import {
-  Controller,
-  Get,
-  NotFoundException,
-  Param,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
-  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { setRes } from 'src/common/utils/setRes';
@@ -36,6 +29,19 @@ export class ContentsController {
     if (contents.items.length === 0) return setRes(404);
     if (contents === null) return setRes(500);
     return setRes(200, contents);
+  }
+
+  @Get('/ids')
+  @ApiOperation({ summary: '컨텐츠 ID 목록 조회 API', description: '' })
+  async getContentsId() {
+    try {
+      const ids = await this.contentsService.getContentsId();
+      if (ids.length === 0) return setRes(404);
+      return setRes(200, ids);
+    } catch (err) {
+      console.error(err);
+      return setRes(500);
+    }
   }
 
   @Get('/:contentId')
