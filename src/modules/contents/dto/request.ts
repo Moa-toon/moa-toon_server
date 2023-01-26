@@ -1,8 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  Contents,
   ContentType,
+  Platforms,
   PlatformType,
   UpdateDayCode,
+  UpdateDays,
 } from 'src/common/types/contents';
 import { PaginationOptions } from 'src/common/utils/pagination/pagination.options';
 import { IsNumberString, IsNotEmpty, IsEnum } from 'class-validator';
@@ -11,30 +14,30 @@ export class GetContentsReqQueryDto implements PaginationOptions {
   @ApiProperty({
     type: String,
     description: '콘텐츠 타입',
-    examples: ContentType,
+    enum: Contents,
     required: true,
   })
-  @IsEnum(ContentType)
+  @IsEnum(Contents)
   @IsNotEmpty()
   readonly type: ContentType;
 
   @ApiProperty({
     type: String,
     description: '콘텐츠 제공 플랫폼',
-    examples: PlatformType,
+    enum: Platforms,
     required: true,
   })
-  @IsEnum(PlatformType)
+  @IsEnum(Platforms)
   @IsNotEmpty()
   readonly platform: PlatformType;
 
   @ApiProperty({
     type: String,
     description: '콘텐츠 업데이트 요일',
-    examples: UpdateDayCode,
+    enum: UpdateDays,
     required: true,
   })
-  @IsEnum(UpdateDayCode)
+  @IsEnum(UpdateDays)
   @IsNotEmpty()
   readonly updateDay: UpdateDayCode;
 
@@ -57,4 +60,16 @@ export class GetContentsReqQueryDto implements PaginationOptions {
   @IsNumberString()
   @IsNotEmpty()
   readonly take: number;
+}
+
+export class GetContentReqParamDto {
+  @ApiProperty({
+    type: Number,
+    description: '컨텐츠 인덱스 번호',
+    example: 1,
+    required: true,
+  })
+  @IsNumberString()
+  @IsNotEmpty()
+  readonly contentId: number;
 }

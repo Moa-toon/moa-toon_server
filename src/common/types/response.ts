@@ -1,4 +1,4 @@
-export type RES_DEFAULT = {
+export type ResDefault = {
   statusCode?: number;
   data?: any;
   message?: string[];

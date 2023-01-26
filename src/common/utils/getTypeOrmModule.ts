@@ -4,6 +4,7 @@ import { Content } from 'src/modules/contents/entities/Content';
 import { ContentAuthor } from 'src/modules/contents/entities/ContentAuthor';
 import { ContentGenre } from 'src/modules/contents/entities/ContentGenre';
 import { ContentUpdateDay } from 'src/modules/contents/entities/ContentUpdateDay';
+import { Episode } from 'src/modules/contents/entities/Episode';
 import { Genre } from 'src/modules/contents/entities/Genre';
 import { Platform } from 'src/modules/contents/entities/Platform';
 import { UpdateDay } from 'src/modules/contents/entities/UpdateDay';
@@ -29,9 +30,11 @@ export function getTypeOrmModule() {
           ContentAuthor,
           ContentGenre,
           ContentUpdateDay,
+          Episode,
         ],
         synchronize: !isProd ? true : false,
         logging: !isProd ? true : false,
+        // logging: false,
       };
     },
   });

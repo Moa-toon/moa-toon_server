@@ -1,8 +1,9 @@
 import { Controller, Get, Post, Query } from '@nestjs/common';
-import { writeFileSync } from 'fs';
-import { PlatformType, UpdateDayCode } from 'src/common/types/contents';
+import { ApiNoContentResponse, ApiOperation } from '@nestjs/swagger';
+import { setRes } from 'src/common/utils/setRes';
 import { ContentsService } from 'src/modules/contents/contents.service';
-import { ScrapeContentService } from 'src/scrape-content/scrape-content.service';
+import { ScrapeContentService } from 'src/modules/scrape-content/scrape-content.service';
+import { ScrapeContentsReqQueryDto } from './dto/request';
 
 @Controller('admin')
 export class AdminController {
@@ -12,14 +13,16 @@ export class AdminController {
   ) {}
 
   @Get('/contents')
-  async getContentsByPlatform(
-    @Query('platform') platform: PlatformType,
-    @Query('updateDay') updateDay: UpdateDayCode,
-  ) {
+  @ApiOperation({
+    summary: '컨텐츠 스크래핑 후 DB 업데이트 API',
+    description: '웹툰, 웹소설 컨텐츠를 스크래핑한 후 DB에 업데이트한다.',
+  })
+  @ApiNoContentResponse({ description: '성공했지만 제공할 컨텐츠가 없음' })
+  async getContentsByPlatform(@Query() query: ScrapeContentsReqQueryDto) {
     try {
       const contents = await this.scrapeContentService.getContentsByPlatform(
-        platform,
-        updateDay,
+        query.platform,
+        query.updateDay,
       );
       // Array<{ main: string; sub: Set<string> }>
       const genres = this.contentsService.getGenres(contents);
@@ -31,10 +34,10 @@ export class AdminController {
       await this.contentsService.saveAuthors(authors);
       // contents 저장
       await this.contentsService.saveContents(contents);
-      return true;
+      return setRes(204);
     } catch (err) {
       console.error(err);
-      return false;
+      return setRes(500);
     }
   }
 

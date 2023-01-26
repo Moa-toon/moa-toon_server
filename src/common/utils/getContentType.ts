@@ -1,10 +1,10 @@
-import { ContentType } from '../types/contents';
+import { Contents, ContentType } from '../types/contents';
 
 export const getContentType = (type: ContentType): number => {
   switch (type) {
-    case ContentType.webtoon:
+    case Contents.webtoon:
       return 0;
-    case ContentType.webNovel:
+    case Contents.webNovel:
       return 1;
     default:
       return null;

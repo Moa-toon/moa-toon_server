@@ -1,25 +1,28 @@
-export enum UpdateDayCode {
-  monday = 'mon',
-  tuesday = 'tue',
-  wednesday = 'wed',
-  thursday = 'thu',
-  friday = 'fri',
-  saturday = 'sat',
-  sunday = 'sun',
-  daily = 'daily',
-  finished = 'finished',
-}
+export const UpdateDays = {
+  monday: 'mon',
+  tuesday: 'tue',
+  wednesday: 'wed',
+  thursday: 'thu',
+  friday: 'fri',
+  saturday: 'sat',
+  sunday: 'sun',
+  daily: 'daily',
+  finished: 'finished',
+} as const;
+export type UpdateDayCode = typeof UpdateDays[keyof typeof UpdateDays];
 
-export enum PlatformType {
-  naver = 'naver',
-  kakao = 'kakao',
-  kakaoPage = 'kakaoPage',
-}
+export const Platforms = {
+  naver: 'naver',
+  kakao: 'kakao',
+  kakaoPage: 'kakaoPage',
+} as const;
+export type PlatformType = typeof Platforms[keyof typeof Platforms];
 
-export enum ContentType {
-  webtoon = 'webtoon',
-  webNovel = 'webNovel',
-}
+export const Contents = {
+  webtoon: 'webtoon',
+  webNovel: 'webNovel',
+} as const;
+export type ContentType = typeof Contents[keyof typeof Contents];
 
 export type WebtoonSimpleInfo = {
   id: string;
@@ -39,9 +42,10 @@ export type WebtoonSimpleInfo = {
 };
 
 export type WebtoonEpisodeInfo = {
-  name: string;
+  order?: number;
+  title: string;
   url: string;
-  thumbnailPath: string;
+  thumbnailUrl: string;
   createDate: string;
   isFree: boolean;
 };

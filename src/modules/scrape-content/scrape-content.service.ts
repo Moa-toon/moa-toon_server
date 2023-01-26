@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { load } from 'cheerio';
 import {
+  Platforms,
   PlatformType,
   UpdateDayCode,
   Webtoon,
@@ -36,7 +37,6 @@ export class ScrapeContentService {
   }
 
   async getNaverWebtoons(baseUrl: string, updateDay: UpdateDayCode) {
-    console.log(updateDay);
     if (updateDay === 'daily') {
       console.log('데일리 웹툰 데이터 수집');
       // Daily 웹툰 콘텐츠 간략 정보 스크래핑
@@ -184,6 +184,7 @@ export class ScrapeContentService {
         })();
       }),
     );
+
     episodesOfAllPages.forEach((episodesOfPage) =>
       episodes.push(...episodesOfPage),
     );
@@ -262,7 +263,7 @@ export class ScrapeContentService {
       authors,
       url: `https://m.comic.naver.com${contentUrl}&sortOrder=ASC`,
       thumbnailPath,
-      platform: PlatformType.naver,
+      platform: Platforms.naver,
       updateDays: [updateDay],
       additional: {
         isNew: isNewWebtoon,
@@ -277,9 +278,9 @@ export class ScrapeContentService {
     $: cheerio.Root,
     element: cheerio.Element,
   ): WebtoonEpisodeInfo {
-    const name = $(element).find('div.info .name strong').text().trim();
+    const title = $(element).find('div.info .name strong').text().trim();
     const additionalUrl = $(element).find('a').attr('href');
-    const thumbnailPath = $(element).find('div.thumbnail img').attr('src');
+    const thumbnailUrl = $(element).find('div.thumbnail img').attr('src');
     const createDate = $(element)
       .find('div.info div.detail .date')
       .text()
@@ -288,9 +289,9 @@ export class ScrapeContentService {
       $(element).find('div.thumbnail > span > span').text().trim() !==
       '유료만화';
     return {
-      name,
+      title,
       url: `${this.NAVER_WEBTOON_BASE_URL}${additionalUrl}`,
-      thumbnailPath,
+      thumbnailUrl,
       createDate,
       isFree,
     };

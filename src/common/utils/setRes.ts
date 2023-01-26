@@ -1,8 +1,17 @@
-import { RES_DEFAULT } from '../types/response';
+import { ResDefault } from '../types/response';
 
 const getErrorMessageByStatusCode = (statusCode: number): string => {
   let errorMessage = '';
   switch (statusCode) {
+    case 200:
+      errorMessage = '성공';
+      break;
+    case 201:
+      errorMessage = '새로운 컨텐츠 만들기 성공';
+      break;
+    case 204:
+      errorMessage = '성공했지만 응답할 콘텐츠가 없음';
+      break;
     case 400:
       errorMessage = '유효성 검사 통과 실패';
       break;
@@ -32,11 +41,11 @@ const getErrorMessageByStatusCode = (statusCode: number): string => {
 };
 
 export const setRes = (
-  statusCode?: RES_DEFAULT['statusCode'],
-  data?: RES_DEFAULT['data'],
-  message?: RES_DEFAULT['message'],
-  error?: RES_DEFAULT['error'],
-): RES_DEFAULT => {
+  statusCode?: ResDefault['statusCode'],
+  data?: ResDefault['data'],
+  message?: ResDefault['message'],
+  error?: ResDefault['error'],
+): ResDefault => {
   const defaultRes = {
     statusCode: undefined,
     data: undefined,
