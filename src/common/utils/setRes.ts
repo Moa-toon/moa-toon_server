@@ -1,4 +1,4 @@
-import { RES_DEFAULT } from '../types/response';
+import { ResDefault } from '../types/response';
 
 const getErrorMessageByStatusCode = (statusCode: number): string => {
   let errorMessage = '';
@@ -32,11 +32,11 @@ const getErrorMessageByStatusCode = (statusCode: number): string => {
 };
 
 export const setRes = (
-  statusCode?: RES_DEFAULT['statusCode'],
-  data?: RES_DEFAULT['data'],
-  message?: RES_DEFAULT['message'],
-  error?: RES_DEFAULT['error'],
-): RES_DEFAULT => {
+  statusCode?: ResDefault['statusCode'],
+  data?: ResDefault['data'],
+  message?: ResDefault['message'],
+  error?: ResDefault['error'],
+): ResDefault => {
   const defaultRes = {
     statusCode: undefined,
     data: undefined,
