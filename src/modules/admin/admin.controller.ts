@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Query } from '@nestjs/common';
+import { ApiNoContentResponse, ApiOperation } from '@nestjs/swagger';
 import { setRes } from 'src/common/utils/setRes';
 import { ContentsService } from 'src/modules/contents/contents.service';
 import { ScrapeContentService } from 'src/modules/scrape-content/scrape-content.service';
@@ -12,6 +13,11 @@ export class AdminController {
   ) {}
 
   @Get('/contents')
+  @ApiOperation({
+    summary: '컨텐츠 스크래핑 후 DB 업데이트 API',
+    description: '웹툰, 웹소설 컨텐츠를 스크래핑한 후 DB에 업데이트한다.',
+  })
+  @ApiNoContentResponse({ description: '성공했지만 제공할 컨텐츠가 없음' })
   async getContentsByPlatform(@Query() query: ScrapeContentsReqQueryDto) {
     try {
       const contents = await this.scrapeContentService.getContentsByPlatform(

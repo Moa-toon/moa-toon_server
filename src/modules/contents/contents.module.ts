@@ -7,6 +7,7 @@ import { Content } from './entities/Content';
 import { ContentAuthor } from './entities/ContentAuthor';
 import { ContentGenre } from './entities/ContentGenre';
 import { ContentUpdateDay } from './entities/ContentUpdateDay';
+import { Episode } from './entities/Episode';
 import { Genre } from './entities/Genre';
 import { Platform } from './entities/Platform';
 import { UpdateDay } from './entities/UpdateDay';
@@ -22,6 +23,7 @@ import { UpdateDay } from './entities/UpdateDay';
       ContentAuthor,
       ContentGenre,
       ContentUpdateDay,
+      Episode,
     ]),
   ],
   controllers: [ContentsController],

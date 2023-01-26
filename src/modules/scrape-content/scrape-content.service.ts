@@ -184,6 +184,7 @@ export class ScrapeContentService {
         })();
       }),
     );
+
     episodesOfAllPages.forEach((episodesOfPage) =>
       episodes.push(...episodesOfPage),
     );
@@ -277,9 +278,9 @@ export class ScrapeContentService {
     $: cheerio.Root,
     element: cheerio.Element,
   ): WebtoonEpisodeInfo {
-    const name = $(element).find('div.info .name strong').text().trim();
+    const title = $(element).find('div.info .name strong').text().trim();
     const additionalUrl = $(element).find('a').attr('href');
-    const thumbnailPath = $(element).find('div.thumbnail img').attr('src');
+    const thumbnailUrl = $(element).find('div.thumbnail img').attr('src');
     const createDate = $(element)
       .find('div.info div.detail .date')
       .text()
@@ -288,9 +289,9 @@ export class ScrapeContentService {
       $(element).find('div.thumbnail > span > span').text().trim() !==
       '유료만화';
     return {
-      name,
+      title,
       url: `${this.NAVER_WEBTOON_BASE_URL}${additionalUrl}`,
-      thumbnailPath,
+      thumbnailUrl,
       createDate,
       isFree,
     };

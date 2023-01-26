@@ -42,9 +42,10 @@ export type WebtoonSimpleInfo = {
 };
 
 export type WebtoonEpisodeInfo = {
-  name: string;
+  order?: number;
+  title: string;
   url: string;
-  thumbnailPath: string;
+  thumbnailUrl: string;
   createDate: string;
   isFree: boolean;
 };

@@ -5,7 +5,7 @@ import { AppService } from './app.service';
 import * as Joi from 'joi';
 import { getTypeOrmModule } from './common/utils/getTypeOrmModule';
 import { ContentsModule } from './modules/contents/contents.module';
-import { AdminModule } from './admin/admin.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { ScrapeContentModule } from './modules/scrape-content/scrape-content.module';
 import { ContentsController } from './modules/contents/contents.controller';
 

@@ -17,6 +17,7 @@ import { Content } from './entities/Content';
 import { ContentAuthor } from './entities/ContentAuthor';
 import { ContentGenre } from './entities/ContentGenre';
 import { ContentUpdateDay } from './entities/ContentUpdateDay';
+import { Episode } from './entities/Episode';
 import { Genre } from './entities/Genre';
 import { Platform } from './entities/Platform';
 import { UpdateDay } from './entities/UpdateDay';
@@ -168,8 +169,8 @@ export class ContentsService {
   async saveContents(contents: Array<Webtoon>): Promise<boolean> {
     try {
       for (const content of contents) {
-        const contentSelected = await this.findContentByTitle(content.title);
-        if (contentSelected) continue;
+        // const contentSelected = await this.findContentByTitle(content.title);
+        // if (contentSelected) continue;
         await this.saveContent(content);
       }
       return true;
@@ -259,33 +260,93 @@ export class ContentsService {
           genresSelected.push(subGenre);
         }
 
-        const contentToSave = Content.from(content, platform);
+        let contentEntity: Content;
+        const contentSelected = await this.getContentDetailByTitle(
+          content.title,
+        );
+
+        if (contentSelected) contentEntity = contentSelected;
+        else contentEntity = Content.from(content, platform);
 
         // contentAuthor
         const contentAuthors: Array<ContentAuthor> = [];
         for (const author of authorsSelected) {
-          contentAuthors.push(ContentAuthor.from(contentToSave, author));
+          const contentAuthorSelected =
+            contentEntity.ContentAuthors.length > 0
+              ? contentEntity.ContentAuthors.find(
+                  (contentAuthor) =>
+                    contentAuthor.AuthorIdx === author.idx &&
+                    contentAuthor.ContentIdx === contentEntity.idx,
+                )
+              : null;
+          if (!contentAuthorSelected)
+            contentAuthors.push(ContentAuthor.from(contentEntity, author));
         }
 
         // contentGenre
         const contentGenres: Array<ContentGenre> = [];
         for (const genre of genresSelected) {
-          contentGenres.push(ContentGenre.from(contentToSave, genre));
+          const contentGenreSelected =
+            contentEntity.ContentGenres.length > 0
+              ? contentEntity.ContentGenres.find(
+                  (contentGenre) =>
+                    contentGenre.GenreIdx === genre.idx &&
+                    contentGenre.ContentIdx === contentEntity.idx,
+                )
+              : null;
+          if (!contentGenreSelected)
+            contentGenres.push(ContentGenre.from(contentEntity, genre));
         }
 
         // contentUpdateDay
         const contentUpdateDays: Array<ContentUpdateDay> = [];
         for (const updateDay of updateDaysSelected) {
-          contentUpdateDays.push(
-            ContentUpdateDay.from(contentToSave, updateDay),
-          );
+          const contentUpdateDaySelected =
+            contentEntity.ContentUpdateDays.length > 0
+              ? contentEntity.ContentUpdateDays.find(
+                  (contentUpdateDay) =>
+                    contentUpdateDay.UpdateDayIdx === updateDay.idx &&
+                    contentUpdateDay.ContentIdx === contentEntity.idx,
+                )
+              : null;
+          if (!contentUpdateDaySelected)
+            contentUpdateDays.push(
+              ContentUpdateDay.from(contentEntity, updateDay),
+            );
         }
 
-        contentToSave.ContentAuthors = contentAuthors;
-        contentToSave.ContentGenres = contentGenres;
-        contentToSave.ContentUpdateDays = contentUpdateDays;
+        // episodes
+        const contentEpisodes: Array<Episode> = [];
+        for (const episodeInfo of content.episodes) {
+          // 에피소드 제목이 프롤로그인 경우,
+          let order = 0;
+          if (episodeInfo.title.match(/\d+/))
+            order = parseInt(episodeInfo.title.match(/\d+/)[0]);
 
-        await contentRepo.save(contentToSave);
+          const contentEpisodeSelected =
+            contentEntity.Episodes.length > 0
+              ? contentEntity.Episodes.find(
+                  (episode) =>
+                    episode.ContentIdx === contentEntity.idx &&
+                    episode.order === order,
+                )
+              : null;
+          if (!contentEpisodeSelected)
+            contentEpisodes.push(
+              Episode.from({ ...episodeInfo, order }, contentEntity),
+            );
+        }
+
+        if (contentAuthors.length > 0)
+          contentEntity.ContentAuthors = contentAuthors;
+        if (contentGenres.length > 0)
+          contentEntity.ContentGenres = contentGenres;
+        if (contentUpdateDays.length > 0)
+          contentEntity.ContentUpdateDays = contentUpdateDays;
+        if (contentEpisodes.length > 0)
+          contentEntity.Episodes = contentEpisodes;
+
+        await contentRepo.save(contentEntity);
         return true;
       })
       .catch((error) => {
@@ -359,6 +420,19 @@ export class ContentsService {
       console.error(err);
       return null;
     }
+  }
+
+  async getContentDetailByTitle(title: string): Promise<Content> {
+    return this.contentRepo.findOne({
+      relations: [
+        'Platform',
+        'ContentUpdateDays',
+        'ContentAuthors',
+        'ContentGenres',
+        'Episodes',
+      ],
+      where: { title },
+    });
   }
 
   async findUpdateDayByName(name: UpdateDayCode): Promise<UpdateDay> {

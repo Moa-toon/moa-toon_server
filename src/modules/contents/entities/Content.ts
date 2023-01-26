@@ -10,6 +10,7 @@ import {
 import { ContentAuthor } from './ContentAuthor';
 import { ContentGenre } from './ContentGenre';
 import { ContentUpdateDay } from './ContentUpdateDay';
+import { Episode } from './Episode';
 import { Platform } from './Platform';
 
 @Entity('content')
@@ -38,7 +39,7 @@ export class Content {
   @Column('varchar', {
     name: 'urlOfPc',
     comment: 'PC 버전 url',
-    length: 100,
+    length: 255,
     nullable: true,
   })
   urlOfPc: string;
@@ -46,7 +47,7 @@ export class Content {
   @Column('varchar', {
     name: 'urlOfMobile',
     comment: 'Mobile 버전 url',
-    length: 100,
+    length: 255,
     nullable: true,
   })
   urlOfMobile: string;
@@ -118,6 +119,9 @@ export class Content {
     { cascade: true },
   )
   ContentUpdateDays: ContentUpdateDay[];
+
+  @OneToMany(() => Episode, (episodes) => episodes.Content, { cascade: true })
+  Episodes: Episode[];
 
   static from(content: Webtoon, platform: Platform): Content {
     console.log(content.summary);
