@@ -1,8 +1,8 @@
 import { Controller, Get, Post, Query } from '@nestjs/common';
-import { writeFileSync } from 'fs';
-import { PlatformType, UpdateDayCode } from 'src/common/types/contents';
+import { setRes } from 'src/common/utils/setRes';
 import { ContentsService } from 'src/modules/contents/contents.service';
-import { ScrapeContentService } from 'src/scrape-content/scrape-content.service';
+import { ScrapeContentService } from 'src/modules/scrape-content/scrape-content.service';
+import { ScrapeContentsReqQueryDto } from './dto/request';
 
 @Controller('admin')
 export class AdminController {
@@ -12,14 +12,11 @@ export class AdminController {
   ) {}
 
   @Get('/contents')
-  async getContentsByPlatform(
-    @Query('platform') platform: PlatformType,
-    @Query('updateDay') updateDay: UpdateDayCode,
-  ) {
+  async getContentsByPlatform(@Query() query: ScrapeContentsReqQueryDto) {
     try {
       const contents = await this.scrapeContentService.getContentsByPlatform(
-        platform,
-        updateDay,
+        query.platform,
+        query.updateDay,
       );
       // Array<{ main: string; sub: Set<string> }>
       const genres = this.contentsService.getGenres(contents);
@@ -31,10 +28,10 @@ export class AdminController {
       await this.contentsService.saveAuthors(authors);
       // contents 저장
       await this.contentsService.saveContents(contents);
-      return true;
+      return setRes(204);
     } catch (err) {
       console.error(err);
-      return false;
+      return setRes(500);
     }
   }
 

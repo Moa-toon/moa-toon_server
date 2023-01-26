@@ -8,9 +8,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
  */
 export function setupSwagger(app: INestApplication): void {
   const options = new DocumentBuilder()
-    .setTitle('MoaToon Server API Docs')
-    .setDescription('MoaToon Server API Description')
+    .setTitle('모아툰 API 문서')
+    .setDescription('모아툰 서비스 API 문서입니다.')
     .setVersion('1.0.0')
+    .addTag('콘텐츠 API', '')
     .build();
 
   const document = SwaggerModule.createDocument(app, options);

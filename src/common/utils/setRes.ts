@@ -3,6 +3,15 @@ import { ResDefault } from '../types/response';
 const getErrorMessageByStatusCode = (statusCode: number): string => {
   let errorMessage = '';
   switch (statusCode) {
+    case 200:
+      errorMessage = '성공';
+      break;
+    case 201:
+      errorMessage = '새로운 컨텐츠 만들기 성공';
+      break;
+    case 204:
+      errorMessage = '성공했지만 응답할 콘텐츠가 없음';
+      break;
     case 400:
       errorMessage = '유효성 검사 통과 실패';
       break;

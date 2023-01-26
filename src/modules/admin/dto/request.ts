@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 import {
   Contents,
   ContentType,
@@ -7,10 +8,8 @@ import {
   UpdateDayCode,
   UpdateDays,
 } from 'src/common/types/contents';
-import { PaginationOptions } from 'src/common/utils/pagination/pagination.options';
-import { IsNumberString, IsNotEmpty, IsEnum } from 'class-validator';
 
-export class GetContentsReqQueryDto implements PaginationOptions {
+export class ScrapeContentsReqQueryDto {
   @ApiProperty({
     type: String,
     description: '콘텐츠 타입',
@@ -40,24 +39,4 @@ export class GetContentsReqQueryDto implements PaginationOptions {
   @IsEnum(UpdateDays)
   @IsNotEmpty()
   readonly updateDay: UpdateDayCode;
-
-  @ApiProperty({
-    type: Number,
-    description: '페이지',
-    example: 1,
-    required: true,
-  })
-  @IsNumberString()
-  @IsNotEmpty()
-  readonly page: number;
-
-  @ApiProperty({
-    type: Number,
-    description: '불러올갯수',
-    example: 10,
-    required: true,
-  })
-  @IsNumberString()
-  @IsNotEmpty()
-  readonly take: number;
 }

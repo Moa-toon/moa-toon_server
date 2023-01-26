@@ -9,7 +9,7 @@ import { ContentUpdateDay } from 'src/modules/contents/entities/ContentUpdateDay
 import { Genre } from 'src/modules/contents/entities/Genre';
 import { Platform } from 'src/modules/contents/entities/Platform';
 import { UpdateDay } from 'src/modules/contents/entities/UpdateDay';
-import { ScrapeContentService } from 'src/scrape-content/scrape-content.service';
+import { ScrapeContentService } from 'src/modules/scrape-content/scrape-content.service';
 import { AdminController } from './admin.controller';
 
 @Module({

@@ -37,7 +37,6 @@ export class ScrapeContentService {
   }
 
   async getNaverWebtoons(baseUrl: string, updateDay: UpdateDayCode) {
-    console.log(updateDay);
     if (updateDay === 'daily') {
       console.log('데일리 웹툰 데이터 수집');
       // Daily 웹툰 콘텐츠 간략 정보 스크래핑

@@ -3,6 +3,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { setRes } from 'src/common/utils/setRes';
@@ -16,6 +17,7 @@ export class ContentsController {
   constructor(private readonly contentsService: ContentsService) {}
 
   @Get('')
+  @ApiOperation({ summary: '콘텐츠 목록 조회 API', description: '' })
   @ApiOkResponse({
     description: '성공',
     type: ContentsResponse,
@@ -23,7 +25,6 @@ export class ContentsController {
   @ApiNotFoundResponse({
     description: '콘텐츠 데이터가 존재하지 않음.',
   })
-  @ApiOperation({ summary: '콘텐츠 목록 조회 API', description: '' })
   async getContents(@Query() query: GetContentsReqQueryDto) {
     const contents = await this.contentsService.getContents(query);
     if (contents.items.length === 0) return setRes(404);

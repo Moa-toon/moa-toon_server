@@ -120,6 +120,7 @@ export class Content {
   ContentUpdateDays: ContentUpdateDay[];
 
   static from(content: Webtoon, platform: Platform): Content {
+    console.log(content.summary);
     const contentEntity = new Content();
     contentEntity.type = content.type;
     contentEntity.idx = parseInt(content.id);
