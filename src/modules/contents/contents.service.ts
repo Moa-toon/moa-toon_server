@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
-  ContentType,
   GenreInfo,
+  Platforms,
   PlatformType,
   UpdateDayCode,
+  UpdateDays,
   Webtoon,
 } from 'src/common/types/contents';
 import { getContentType } from 'src/common/utils/getContentType';
@@ -85,9 +86,9 @@ export class ContentsService {
 
         // platform 정보 테이블에 저장
         const platforms: Array<PlatformType> = [
-          PlatformType.naver,
-          PlatformType.kakao,
-          PlatformType.kakaoPage,
+          Platforms.naver,
+          Platforms.kakao,
+          Platforms.kakaoPage,
         ];
         for (const platformName of platforms) {
           const platformSelected = await platformRepo.findOneBy({
@@ -99,15 +100,15 @@ export class ContentsService {
 
         // updateDay 정보 테이블에 저장
         const updateDays: Array<UpdateDayCode> = [
-          UpdateDayCode.monday,
-          UpdateDayCode.tuesday,
-          UpdateDayCode.wednesday,
-          UpdateDayCode.thursday,
-          UpdateDayCode.friday,
-          UpdateDayCode.saturday,
-          UpdateDayCode.sunday,
-          UpdateDayCode.daily,
-          UpdateDayCode.finished,
+          UpdateDays.monday,
+          UpdateDays.tuesday,
+          UpdateDays.wednesday,
+          UpdateDays.thursday,
+          UpdateDays.friday,
+          UpdateDays.saturday,
+          UpdateDays.sunday,
+          UpdateDays.daily,
+          UpdateDays.finished,
         ];
         for (const updateDayName of updateDays) {
           const updateDaySelected = await this.updateDayRepo.findOneBy({

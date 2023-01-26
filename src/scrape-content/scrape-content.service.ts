@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { load } from 'cheerio';
 import {
+  Platforms,
   PlatformType,
   UpdateDayCode,
   Webtoon,
@@ -262,7 +263,7 @@ export class ScrapeContentService {
       authors,
       url: `https://m.comic.naver.com${contentUrl}&sortOrder=ASC`,
       thumbnailPath,
-      platform: PlatformType.naver,
+      platform: Platforms.naver,
       updateDays: [updateDay],
       additional: {
         isNew: isNewWebtoon,
