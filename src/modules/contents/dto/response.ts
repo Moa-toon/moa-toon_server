@@ -60,7 +60,7 @@ abstract class Content {
 export abstract class PaginationMetaData {
   @ApiProperty({
     type: Number,
-    description: '총개수',
+    description: '콘텐츠 총 개수',
     example: 10,
   })
   totalCount: number;

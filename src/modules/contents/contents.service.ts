@@ -299,61 +299,66 @@ export class ContentsService {
   ): Promise<ContentPaginationData> {
     const { type, platform, updateDay, page, take } = query;
 
-    const [contents, totalCount] = await this.contentRepo.findAndCount({
-      select: {
-        idx: true,
-        title: true,
-        summary: true,
-        thumbnailPath: true,
-        urlOfMobile: true,
-        ageLimit: true,
-        isUpdated: true,
-        isNew: true,
-        isAdult: true,
-      },
-      relations: [
-        'Platform',
-        'ContentUpdateDays',
-        'ContentUpdateDays.UpdateDay',
-      ],
-      where: {
-        type: getContentType(type),
-        Platform: {
-          name: platform,
+    try {
+      const [contents, totalCount] = await this.contentRepo.findAndCount({
+        select: {
+          idx: true,
+          title: true,
+          summary: true,
+          thumbnailPath: true,
+          urlOfMobile: true,
+          ageLimit: true,
+          isUpdated: true,
+          isNew: true,
+          isAdult: true,
         },
-        ContentUpdateDays: {
-          UpdateDay: {
-            name: updateDay,
+        relations: [
+          'Platform',
+          'ContentUpdateDays',
+          'ContentUpdateDays.UpdateDay',
+        ],
+        where: {
+          type: getContentType(type),
+          Platform: {
+            name: platform,
+          },
+          ContentUpdateDays: {
+            UpdateDay: {
+              name: updateDay,
+            },
           },
         },
-      },
-      take: take,
-      skip: take * (page - 1),
-    });
+        take: take,
+        skip: take * (page - 1),
+      });
 
-    const items =
-      contents.length > 0
-        ? contents.map((content) => ({
-            idx: content.idx,
-            title: content.title,
-            summary: content.summary ?? '',
-            ageLimit: content.ageLimit,
-            pageUrl: content.urlOfMobile,
-            thumbnailUrl: content.thumbnailPath,
-            isNew: content.isNew,
-            isAdult: content.isAdult,
-            isUpdated: content.isUpdated,
-          }))
-        : [];
-    const meta: PaginationMetaData = {
-      totalCount,
-      pageCount: Math.ceil(totalCount / take),
-    };
+      const items =
+        contents.length > 0
+          ? contents.map((content) => ({
+              idx: content.idx,
+              title: content.title,
+              summary: content.summary ?? '',
+              ageLimit: content.ageLimit,
+              pageUrl: content.urlOfMobile,
+              thumbnailUrl: content.thumbnailPath,
+              isNew: content.isNew,
+              isAdult: content.isAdult,
+              isUpdated: content.isUpdated,
+            }))
+          : [];
+      const meta: PaginationMetaData = {
+        totalCount,
+        pageCount: Math.ceil(totalCount / take),
+      };
 
-    return {
-      items,
-      meta,
-    };
+      return {
+        items,
+        meta,
+      };
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
   }
 
   async findUpdateDayByName(name: UpdateDayCode): Promise<UpdateDay> {

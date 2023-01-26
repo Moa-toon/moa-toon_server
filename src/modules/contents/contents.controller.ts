@@ -27,6 +27,7 @@ export class ContentsController {
   async getContents(@Query() query: GetContentsReqQueryDto) {
     const contents = await this.contentsService.getContents(query);
     if (contents.items.length === 0) return setRes(404);
+    if (contents === null) return setRes(500);
     return setRes(200, contents);
   }
 }
