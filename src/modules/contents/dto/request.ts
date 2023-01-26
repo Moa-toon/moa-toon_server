@@ -61,3 +61,15 @@ export class GetContentsReqQueryDto implements PaginationOptions {
   @IsNotEmpty()
   readonly take: number;
 }
+
+export class GetContentReqParamDto {
+  @ApiProperty({
+    type: Number,
+    description: '컨텐츠 인덱스 번호',
+    example: 1,
+    required: true,
+  })
+  @IsNumberString()
+  @IsNotEmpty()
+  readonly contentId: number;
+}

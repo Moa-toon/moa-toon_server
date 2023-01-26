@@ -435,6 +435,22 @@ export class ContentsService {
     });
   }
 
+  async getContentDetailById(contentId: number): Promise<Content> {
+    return this.contentRepo.findOne({
+      relations: [
+        'Platform',
+        'ContentUpdateDays',
+        'ContentUpdateDays.UpdateDay',
+        'ContentAuthors',
+        'ContentAuthors.Author',
+        'ContentGenres',
+        'ContentGenres.Genre',
+        'Episodes',
+      ],
+      where: { idx: contentId },
+    });
+  }
+
   async findUpdateDayByName(name: UpdateDayCode): Promise<UpdateDay> {
     return this.updateDayRepo.findOneBy({ name });
   }
