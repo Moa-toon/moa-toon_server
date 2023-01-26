@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   GenreInfo,
@@ -8,10 +8,17 @@ import {
   UpdateDays,
   Webtoon,
 } from 'src/common/types/contents';
+import { getAgeLimitKor } from 'src/common/utils/getAgeLimitKor';
+import { getAuthorTypeKor } from 'src/common/utils/getAuthorTypeKor';
 import { getContentType } from 'src/common/utils/getContentType';
 import { DataSource, Repository } from 'typeorm';
 import { GetContentsReqQueryDto } from './dto/request';
-import { ContentPaginationData, PaginationMetaData } from './dto/response';
+import {
+  ContentDetail,
+  ContentPaginationData,
+  ContentResponse,
+  PaginationMetaData,
+} from './dto/response';
 import { Author } from './entities/Author';
 import { Content } from './entities/Content';
 import { ContentAuthor } from './entities/ContentAuthor';
@@ -435,10 +442,32 @@ export class ContentsService {
     });
   }
 
-  async getContentDetailById(contentId: number): Promise<Content> {
-    return this.contentRepo.findOne({
+  async getContentDetailById(contentId: number): Promise<ContentDetail> {
+    const content = await this.contentRepo.findOne({
+      select: {
+        idx: true,
+        title: true,
+        summary: true,
+        description: true,
+        thumbnailPath: true,
+        urlOfMobile: true,
+        ageLimit: true,
+        isUpdated: true,
+        isNew: true,
+        isAdult: true,
+        ContentUpdateDays: true,
+        ContentAuthors: true,
+        ContentGenres: true,
+        Episodes: {
+          order: true,
+          title: true,
+          pageUrl: true,
+          thumbnailUrl: true,
+          isFree: true,
+          createdAt: true,
+        },
+      },
       relations: [
-        'Platform',
         'ContentUpdateDays',
         'ContentUpdateDays.UpdateDay',
         'ContentAuthors',
@@ -449,6 +478,44 @@ export class ContentsService {
       ],
       where: { idx: contentId },
     });
+    if (!content) return null;
+
+    const result = {
+      idx: content.idx,
+      genre: {
+        main: content.ContentGenres.find(
+          (contentGenre) => contentGenre.Genre.parentIdx === 0,
+        ).Genre.name,
+        sub: content.ContentGenres.filter(
+          (contentGenre) => contentGenre.Genre.parentIdx === 1,
+        ).map((contentGenre) => contentGenre.Genre.name),
+      },
+      title: content.title,
+      description: content.description,
+      ageLimitKor: getAgeLimitKor(content.ageLimit),
+      pageUrl: content.urlOfMobile,
+      thumbnailUrl: content.thumbnailPath,
+      isNew: content.isNew,
+      isUpdated: content.isUpdated,
+      isAdult: content.isAdult,
+      authors: content.ContentAuthors.map((contentAuthor) => ({
+        type: getAuthorTypeKor(contentAuthor.Author.type),
+        name: contentAuthor.Author.name,
+      })),
+      episodes: {
+        totalCount: content.Episodes.length,
+        items: content.Episodes.map((episode) => ({
+          order: episode.order,
+          title: episode.title,
+          pageUrl: episode.pageUrl,
+          thumbnailUrl: episode.thumbnailUrl,
+          isFree: episode.isFree,
+          createdAt: episode.createdAt,
+        })),
+      },
+    };
+
+    return result;
   }
 
   async getContentsId(): Promise<Array<number>> {
