@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   GenreInfo,
@@ -16,7 +16,6 @@ import { GetContentsReqQueryDto } from './dto/request';
 import {
   ContentDetail,
   ContentPaginationData,
-  ContentResponse,
   PaginationMetaData,
 } from './dto/response';
 import { Author } from './entities/Author';
@@ -28,6 +27,7 @@ import { Episode } from './entities/Episode';
 import { Genre } from './entities/Genre';
 import { Platform } from './entities/Platform';
 import { UpdateDay } from './entities/UpdateDay';
+import { ContentRepository } from './repositories/contents.repository';
 
 @Injectable()
 export class ContentsService {
@@ -40,8 +40,7 @@ export class ContentsService {
     private readonly genreRepo: Repository<Genre>,
     @InjectRepository(Author)
     private readonly authorRepo: Repository<Author>,
-    @InjectRepository(Content)
-    private readonly contentRepo: Repository<Content>,
+    private readonly contentRepo: ContentRepository,
     private dataSource: DataSource,
   ) {}
 
@@ -176,8 +175,6 @@ export class ContentsService {
   async saveContents(contents: Array<Webtoon>): Promise<boolean> {
     try {
       for (const content of contents) {
-        // const contentSelected = await this.findContentByTitle(content.title);
-        // if (contentSelected) continue;
         await this.saveContent(content);
       }
       return true;
@@ -368,37 +365,14 @@ export class ContentsService {
     const { type, platform, updateDay, page, take } = query;
 
     try {
-      const [contents, totalCount] = await this.contentRepo.findAndCount({
-        select: {
-          idx: true,
-          title: true,
-          summary: true,
-          thumbnailPath: true,
-          urlOfMobile: true,
-          ageLimit: true,
-          isUpdated: true,
-          isNew: true,
-          isAdult: true,
-        },
-        relations: [
-          'Platform',
-          'ContentUpdateDays',
-          'ContentUpdateDays.UpdateDay',
-        ],
-        where: {
+      const [contents, totalCount] =
+        await this.contentRepo.findContentsWithCount({
           type: getContentType(type),
-          Platform: {
-            name: platform,
-          },
-          ContentUpdateDays: {
-            UpdateDay: {
-              name: updateDay,
-            },
-          },
-        },
-        take: take,
-        skip: take * (page - 1),
-      });
+          platform,
+          updateDay,
+          page,
+          take,
+        });
 
       const items =
         contents.length > 0
@@ -430,54 +404,11 @@ export class ContentsService {
   }
 
   async getContentDetailByTitle(title: string): Promise<Content> {
-    return this.contentRepo.findOne({
-      relations: [
-        'Platform',
-        'ContentUpdateDays',
-        'ContentAuthors',
-        'ContentGenres',
-        'Episodes',
-      ],
-      where: { title },
-    });
+    return this.contentRepo.findContentDetailByTitle(title);
   }
 
   async getContentDetailById(contentId: number): Promise<ContentDetail> {
-    const content = await this.contentRepo.findOne({
-      select: {
-        idx: true,
-        title: true,
-        summary: true,
-        description: true,
-        thumbnailPath: true,
-        urlOfMobile: true,
-        ageLimit: true,
-        isUpdated: true,
-        isNew: true,
-        isAdult: true,
-        ContentUpdateDays: true,
-        ContentAuthors: true,
-        ContentGenres: true,
-        Episodes: {
-          order: true,
-          title: true,
-          pageUrl: true,
-          thumbnailUrl: true,
-          isFree: true,
-          createdAt: true,
-        },
-      },
-      relations: [
-        'ContentUpdateDays',
-        'ContentUpdateDays.UpdateDay',
-        'ContentAuthors',
-        'ContentAuthors.Author',
-        'ContentGenres',
-        'ContentGenres.Genre',
-        'Episodes',
-      ],
-      where: { idx: contentId },
-    });
+    const content = await this.contentRepo.findContentDetailById(contentId);
     if (!content) return null;
 
     const result = {
@@ -519,11 +450,7 @@ export class ContentsService {
   }
 
   async getContentsId(): Promise<Array<number>> {
-    const contentsSelected = await this.contentRepo.find({
-      select: {
-        idx: true,
-      },
-    });
+    const contentsSelected = await this.contentRepo.findContentIds();
     const ids =
       contentsSelected.length > 0
         ? contentsSelected.map((content) => content.idx)
@@ -539,10 +466,6 @@ export class ContentsService {
     return this.platformRepo.findOneBy({ name });
   }
 
-  async findContentByTitle(name: string): Promise<Content> {
-    return this.contentRepo.findOneBy({ title: name });
-  }
-
   async findAuthorByName(name: string): Promise<Author> {
     return this.authorRepo.findOneBy({ name });
   }
@@ -553,10 +476,6 @@ export class ContentsService {
 
   async saveGenre(genre: Genre): Promise<Genre> {
     return this.genreRepo.save(genre);
-  }
-
-  async saveContentEntity(content: Content): Promise<Content> {
-    return this.contentRepo.save(content);
   }
 
   async savePlatform(platform: Platform): Promise<Platform> {
