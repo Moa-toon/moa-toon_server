@@ -1,4 +1,5 @@
 import { Webtoon } from 'src/common/types/contents';
+import { getUniqueIdxByPlatform } from 'src/common/utils/getUniqueIdxByPlatform';
 import {
   Column,
   Entity,
@@ -17,6 +18,13 @@ import { Platform } from './Platform';
 export class Content {
   @PrimaryGeneratedColumn({ type: 'int', name: 'idx', comment: '인덱스' })
   idx: number;
+
+  @Column('varchar', {
+    name: 'uuid',
+    comment: '각 플랫폼으로부터 부여받은 콘텐츠 고유번호',
+    length: 20,
+  })
+  uuid: string;
 
   @Column('tinyint', {
     name: 'type',
@@ -124,10 +132,11 @@ export class Content {
   Episodes: Episode[];
 
   static from(content: Webtoon, platform: Platform): Content {
-    console.log(content.summary);
     const contentEntity = new Content();
     contentEntity.type = content.type;
-    contentEntity.idx = parseInt(content.id);
+    contentEntity.uuid = `${getUniqueIdxByPlatform(platform.name)}${
+      content.id
+    }`;
     contentEntity.title = content.title;
     contentEntity.summary = content.summary;
     contentEntity.description = content.description;
