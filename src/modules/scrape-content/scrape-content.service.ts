@@ -5,6 +5,7 @@ import {
   Platforms,
   PlatformType,
   UpdateDayCode,
+  UpdateDays,
   Webtoon,
   WebtoonAdditionalInfo,
   WebtoonEpisodeInfo,
@@ -72,7 +73,31 @@ export class ScrapeContentService {
       return weeklyDayWebtoons;
     } else if (updateDay === 'finished') {
       console.log('완결 웹툰 스크래핑 작업');
+      const pageCount = await this.getPageCount(
+        `${baseUrl}/finish`,
+        '#ct > div.section_list_toon > div.paging_type2 > em > span',
+      );
+      const pages = Array.from({ length: pageCount }, (_, i) => i + 1);
+      const webtoonsSimpleDataOfPages =
+        await this.scrapeNaverWebtoonsSimpleData(pages, UpdateDays.finished);
+      // 2차원 배열 => 1차원 배열
+      const webtoonsSimpleData = webtoonsSimpleDataOfPages.reduce(
+        (acc, curr) => [...acc, ...curr],
+      );
+      const webtoonsAdditionalData =
+        await this.scrapeNaverWebtoonsAdditionalData(webtoonsSimpleData);
+      const finishedWebtoons = this.makeWebtoonData(
+        webtoonsSimpleData,
+        webtoonsAdditionalData,
+      );
+      return finishedWebtoons;
     }
+  }
+
+  async getPageCount(url: string, selector: string): Promise<number> {
+    const htmlData = await this.getHtmlData(url);
+    const $ = this.loadHtml(htmlData);
+    return parseInt($(selector).text());
   }
 
   makeWebtoonData(
@@ -96,6 +121,22 @@ export class ScrapeContentService {
       }
     }
     return webtoons;
+  }
+
+  async scrapeNaverWebtoonsSimpleData(
+    pages: Array<number>,
+    updateDay: UpdateDayCode,
+  ) {
+    return Promise.all(
+      pages.map((pageNumber) => {
+        if (updateDay === UpdateDays.finished) {
+          return this.scrapeNaverWebtoonSimpleData(
+            `${this.NAVER_WEBTOON_URL}/finish?page=${pageNumber}&sort=UPDATE&genre=`,
+            UpdateDays.finished,
+          );
+        }
+      }),
+    );
   }
 
   async scrapeNaverWebtoonSimpleData(
