@@ -31,6 +31,18 @@ import { ContentRepository } from './repositories/contents.repository';
 
 @Injectable()
 export class ContentsService {
+  private propertiesToUpdate = [
+    'title',
+    'description',
+    'ageLimit',
+    'isNew',
+    'isAdult',
+    'isPaused',
+    'isUpdated',
+    'thumbnailPath',
+    'summary',
+  ];
+
   constructor(
     @InjectRepository(Platform)
     private readonly platformRepo: Repository<Platform>,
@@ -269,14 +281,16 @@ export class ContentsService {
           content.title,
         );
 
-        if (contentSelected) contentEntity = contentSelected;
-        else contentEntity = Content.from(content, platform);
+        if (contentSelected) {
+          // contentEntity와 content 비교 후 데이터 업데이트
+          contentEntity = this.compareAndUpdate(contentSelected, content);
+        } else contentEntity = Content.from(content, platform);
 
         // contentAuthor
         const contentAuthors: Array<ContentAuthor> = [];
         for (const author of authorsSelected) {
           const contentAuthorSelected =
-            contentEntity.ContentAuthors.length > 0
+            contentEntity.ContentAuthors?.length > 0
               ? contentEntity.ContentAuthors.find(
                   (contentAuthor) =>
                     contentAuthor.AuthorIdx === author.idx &&
@@ -291,7 +305,7 @@ export class ContentsService {
         const contentGenres: Array<ContentGenre> = [];
         for (const genre of genresSelected) {
           const contentGenreSelected =
-            contentEntity.ContentGenres.length > 0
+            contentEntity.ContentGenres?.length > 0
               ? contentEntity.ContentGenres.find(
                   (contentGenre) =>
                     contentGenre.GenreIdx === genre.idx &&
@@ -306,7 +320,7 @@ export class ContentsService {
         const contentUpdateDays: Array<ContentUpdateDay> = [];
         for (const updateDay of updateDaysSelected) {
           const contentUpdateDaySelected =
-            contentEntity.ContentUpdateDays.length > 0
+            contentEntity.ContentUpdateDays?.length > 0
               ? contentEntity.ContentUpdateDays.find(
                   (contentUpdateDay) =>
                     contentUpdateDay.UpdateDayIdx === updateDay.idx &&
@@ -328,7 +342,7 @@ export class ContentsService {
             order = parseInt(episodeInfo.title.match(/\d+/)[0]);
 
           const contentEpisodeSelected =
-            contentEntity.Episodes.length > 0
+            contentEntity.Episodes?.length > 0
               ? contentEntity.Episodes.find(
                   (episode) =>
                     episode.ContentIdx === contentEntity.idx &&
@@ -488,5 +502,48 @@ export class ContentsService {
 
   async saveAuthor(author: Author): Promise<Author> {
     return this.authorRepo.save(author);
+  }
+
+  compareAndUpdate(contentEntity: Content, contentDto: Webtoon): Content {
+    // contentEntity와 content 비교
+    // contentEntity: urlOfPc, urlOfMobile
+    for (const [key, val] of Object.entries(contentEntity)) {
+      // title, summary, description, ageLimit, thumbnailPath
+      if (
+        [
+          'title',
+          'summary',
+          'description',
+          'ageLimit',
+          'thumbnailPath',
+        ].includes(key)
+      ) {
+        if (val !== contentDto[key]) {
+          console.log(`[${contentEntity.idx}] ${key} 데이터가 일치하지 않음.`);
+          contentEntity[key] = contentDto[key];
+        }
+      } else if (['isNew', 'isAdult', 'isPaused', 'isUpdated'].includes(key)) {
+        if (val !== contentDto.additional[key]) {
+          console.log(`[${contentEntity.idx}] ${key} 데이터가 일치하지 않음.`);
+          contentEntity[key] = contentDto.additional[key];
+        }
+      } else if (key === 'urlOfMobile') {
+        if (val !== contentDto.url) {
+          console.log(`[${contentEntity.idx}] ${key} 데이터가 일치하지 않음.`);
+          contentEntity[key] = contentDto.url;
+        }
+      } else if (key === 'Episodes') {
+        // Episode 업데이트
+        for (const episode of contentDto.episodes) {
+          const episodeFound = contentEntity.Episodes.find(
+            (Episode) => Episode.title === episode.title,
+          );
+          if (!episodeFound) {
+            contentEntity[key].push(Episode.from(episode, contentEntity));
+          }
+        }
+      }
+    }
+    return contentEntity;
   }
 }
