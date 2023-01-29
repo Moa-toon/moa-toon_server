@@ -1,12 +1,36 @@
 import { CustomRepository } from 'src/modules/db/typeorm-ex.decorator';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, InsertResult, Repository } from 'typeorm';
 import { FindContentsOption } from '../dto/db';
 import { Content } from '../entities/Content';
 
 @CustomRepository(Content)
 export class ContentRepository extends Repository<Content> {
-  async createContent(content: Content): Promise<Content> {
-    return this.save(content);
+  async createContent(content: Content): Promise<InsertResult> {
+    return this.createQueryBuilder()
+      .insert()
+      .into(Content)
+      .values(content)
+      .orUpdate(
+        ['uuid'],
+        [
+          'title',
+          'summary',
+          'description',
+          'ageLimit',
+          'isNew',
+          'isPaused',
+          'isUpdated',
+          'isAdult',
+          'urlOfPc',
+          'urlOfMobile',
+          'thumbnailPath',
+        ],
+      )
+      .execute();
+  }
+
+  async findContentByUUID(uuid: string): Promise<Content> {
+    return this.findOneBy({ uuid });
   }
 
   async findContentByTitle(title: string): Promise<Content> {
@@ -91,6 +115,44 @@ export class ContentRepository extends Repository<Content> {
         'Episodes',
       ],
       where: { title },
+    });
+  }
+
+  async findContentDetailByUUID(uuid: string): Promise<Content> {
+    return this.findOne({
+      select: {
+        idx: true,
+        title: true,
+        summary: true,
+        description: true,
+        thumbnailPath: true,
+        urlOfMobile: true,
+        ageLimit: true,
+        isUpdated: true,
+        isNew: true,
+        isAdult: true,
+        ContentUpdateDays: true,
+        ContentAuthors: true,
+        ContentGenres: true,
+        Episodes: {
+          order: true,
+          title: true,
+          pageUrl: true,
+          thumbnailUrl: true,
+          isFree: true,
+          createdAt: true,
+        },
+      },
+      relations: [
+        'ContentUpdateDays',
+        'ContentUpdateDays.UpdateDay',
+        'ContentAuthors',
+        'ContentAuthors.Author',
+        'ContentGenres',
+        'ContentGenres.Genre',
+        'Episodes',
+      ],
+      where: { uuid },
     });
   }
 

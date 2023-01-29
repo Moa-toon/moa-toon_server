@@ -21,9 +21,9 @@ export class ContentUpdateDay {
   })
   UpdateDay: UpdateDay;
 
-  static from(content: Content, updateDay: UpdateDay): ContentUpdateDay {
+  static from(contentIdx: number, updateDay: UpdateDay): ContentUpdateDay {
     const contentUpdateDay = new ContentUpdateDay();
-    contentUpdateDay.Content = content;
+    contentUpdateDay.ContentIdx = contentIdx;
     contentUpdateDay.UpdateDay = updateDay;
     return contentUpdateDay;
   }

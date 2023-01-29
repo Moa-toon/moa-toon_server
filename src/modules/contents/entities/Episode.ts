@@ -56,9 +56,9 @@ export class Episode {
   @JoinColumn({ name: 'contentIdx', referencedColumnName: 'idx' })
   Content: Content;
 
-  static from(episodeInfo: WebtoonEpisodeInfo, content: Content): Episode {
+  static from(contentIdx: number, episodeInfo: WebtoonEpisodeInfo): Episode {
     const episode = new Episode();
-    episode.Content = content;
+    episode.ContentIdx = contentIdx;
     episode.order = episodeInfo.order;
     episode.title = episodeInfo.title;
     episode.pageUrl = episodeInfo.url;

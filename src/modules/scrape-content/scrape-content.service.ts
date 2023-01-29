@@ -201,14 +201,7 @@ export class ScrapeContentService {
     const pageCount = $('#ct > div.paging_type2 > em > span').text();
 
     // 회차 정보 수집
-    const episodes = [];
-    const episodeItemList = $('#ct > ul.section_episode_list li.item');
-    for (const episodeItem of episodeItemList) {
-      const episodeInfo = this.getWebtoonEpisode($, episodeItem);
-      episodes.push(episodeInfo);
-    }
-
-    const pages = Array.from({ length: parseInt(pageCount) }, (v, i) => i + 2);
+    const pages = Array.from({ length: parseInt(pageCount) }, (v, i) => i + 1);
     const episodesOfAllPages = await Promise.all(
       pages.map(async (page) => {
         return (async () => {
@@ -225,9 +218,9 @@ export class ScrapeContentService {
         })();
       }),
     );
-
-    episodesOfAllPages.forEach((episodesOfPage) =>
-      episodes.push(...episodesOfPage),
+    const episodes = episodesOfAllPages.reduce(
+      (acc, curr) => [...acc, ...curr],
+      [],
     );
     return {
       ageLimit,
