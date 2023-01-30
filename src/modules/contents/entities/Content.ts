@@ -25,6 +25,7 @@ export class Content {
     comment: '각 플랫폼으로부터 부여받은 콘텐츠 고유번호',
     length: 20,
     default: '',
+    unique: true,
   })
   uuid: string;
 

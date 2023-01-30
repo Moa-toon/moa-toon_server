@@ -195,11 +195,9 @@ export class ContentsService {
 
   async saveContents(contents: Array<Webtoon>): Promise<boolean> {
     try {
-      console.log('content 저장 시작');
       for (const content of contents) {
         await this.saveContent(content);
       }
-      console.log('content 저장 종료');
       return true;
     } catch (err) {
       console.error(err);
