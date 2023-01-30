@@ -7,7 +7,11 @@ import {
 } from '@nestjs/swagger';
 import { setRes } from 'src/common/utils/setRes';
 import { ContentsService } from './contents.service';
-import { GetContentReqParamDto, GetContentsReqQueryDto } from './dto/request';
+import {
+  GetContentReqParamDto,
+  GetContentsReqQueryDto,
+  SearchContentsReqQueryDto,
+} from './dto/request';
 import { ContentResponse, ContentsResponse } from './dto/response';
 
 @ApiTags('콘텐츠 API')
@@ -42,6 +46,22 @@ export class ContentsController {
       console.error(err);
       return setRes(500);
     }
+  }
+
+  @Get('/search')
+  @ApiOperation({ summary: '컨텐츠 검색 API', description: '' })
+  @ApiOkResponse({
+    description: '성공',
+    type: ContentsResponse,
+  })
+  @ApiNotFoundResponse({
+    description: '컨텐츠 데이터가 존재하지 않음.',
+  })
+  async searchContents(@Query() query: SearchContentsReqQueryDto) {
+    const contents = await this.contentsService.searchContents(query);
+    if (contents.items.length === 0) return setRes(404);
+    if (contents === null) return setRes(500);
+    return setRes(200, contents);
   }
 
   @Get('/:contentId')

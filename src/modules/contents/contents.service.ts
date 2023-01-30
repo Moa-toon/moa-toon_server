@@ -13,7 +13,10 @@ import { getAuthorTypeKor } from 'src/common/utils/getAuthorTypeKor';
 import { getContentType } from 'src/common/utils/getContentType';
 import { getUniqueIdxByPlatform } from 'src/common/utils/getUniqueIdxByPlatform';
 import { DataSource, Repository } from 'typeorm';
-import { GetContentsReqQueryDto } from './dto/request';
+import {
+  GetContentsReqQueryDto,
+  SearchContentsReqQueryDto,
+} from './dto/request';
 import {
   ContentDetail,
   ContentPaginationData,
@@ -565,5 +568,39 @@ export class ContentsService {
       }
     }
     return contentEntity;
+  }
+
+  async searchContents(
+    query: SearchContentsReqQueryDto,
+  ): Promise<ContentPaginationData> {
+    try {
+      const [contents, totalCount] = await this.contentRepo.searchContentsBy(
+        query,
+      );
+      const items =
+        contents.length > 0
+          ? contents.map((content) => ({
+              idx: content.idx,
+              title: content.title,
+              summary: content.summary ?? '',
+              ageLimit: content.ageLimit,
+              pageUrl: content.urlOfMobile,
+              thumbnailUrl: content.thumbnailPath,
+              isNew: content.isNew,
+              isAdult: content.isAdult,
+              isUpdated: content.isUpdated,
+            }))
+          : [];
+      const meta: PaginationMetaData = {
+        totalCount,
+      };
+      return {
+        items,
+        meta,
+      };
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
   }
 }
