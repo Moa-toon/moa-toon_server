@@ -21,9 +21,9 @@ export class ContentAuthor {
   })
   Author: Author;
 
-  static from(content: Content, author: Author): ContentAuthor {
+  static from(contentIdx: number, author: Author): ContentAuthor {
     const contentAuthor = new ContentAuthor();
-    contentAuthor.Content = content;
+    contentAuthor.ContentIdx = contentIdx;
     contentAuthor.Author = author;
     return contentAuthor;
   }

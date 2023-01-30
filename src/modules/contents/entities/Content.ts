@@ -1,7 +1,9 @@
 import { Webtoon } from 'src/common/types/contents';
+import { getUniqueIdxByPlatform } from 'src/common/utils/getUniqueIdxByPlatform';
 import {
   Column,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -18,22 +20,42 @@ export class Content {
   @PrimaryGeneratedColumn({ type: 'int', name: 'idx', comment: '인덱스' })
   idx: number;
 
+  @Column('varchar', {
+    name: 'uuid',
+    comment: '각 플랫폼으로부터 부여받은 콘텐츠 고유번호',
+    length: 20,
+    default: '',
+    unique: true,
+  })
+  uuid: string;
+
   @Column('tinyint', {
     name: 'type',
     comment: '콘텐츠 타입(0: 웹툰, 1: 웹소설)',
+    default: 0,
   })
   type: number;
 
-  @Column('varchar', { name: 'title', comment: '제목', length: 100 })
+  @Column('varchar', {
+    name: 'title',
+    comment: '제목',
+    length: 100,
+    default: '',
+  })
   title: string;
 
-  @Column('varchar', { name: 'summary', comment: '줄거리 요약', length: 200 })
+  @Column('varchar', {
+    name: 'summary',
+    comment: '줄거리 요약',
+    length: 200,
+    nullable: true,
+  })
   summary: string;
 
-  @Column('text', { name: 'description', comment: '줄거리' })
+  @Column('text', { name: 'description', comment: '줄거리', nullable: true })
   description: string;
 
-  @Column('tinyint', { name: 'ageLimit', comment: '나이 제한' })
+  @Column('tinyint', { name: 'ageLimit', comment: '나이 제한', default: 0 })
   ageLimit: number;
 
   @Column('varchar', {
@@ -56,30 +78,35 @@ export class Content {
     name: 'thumbnailPath',
     comment: '썸네일 이미지 경로',
     length: 255,
+    nullable: true,
   })
   thumbnailPath: string;
 
   @Column('boolean', {
     name: 'isNew',
     comment: '신규 콘텐츠 여부',
+    default: false,
   })
   isNew: boolean;
 
   @Column('boolean', {
     name: 'isAdult',
     comment: '성인 콘텐츠 여부',
+    default: false,
   })
   isAdult: boolean;
 
   @Column('boolean', {
     name: 'isPaused',
     comment: '콘텐츠 휴재 여부',
+    default: false,
   })
   isPaused: boolean;
 
   @Column('boolean', {
     name: 'isUpdated',
     comment: '콘텐츠 업데이트 여부',
+    default: false,
   })
   isUpdated: boolean;
 
@@ -103,31 +130,27 @@ export class Content {
   @JoinColumn({ name: 'platformIdx', referencedColumnName: 'idx' })
   Platform: Platform;
 
-  @OneToMany(() => ContentGenre, (contentGenres) => contentGenres.Content, {
-    cascade: true,
-  })
+  @OneToMany(() => ContentGenre, (contentGenres) => contentGenres.Content)
   ContentGenres: ContentGenre[];
 
-  @OneToMany(() => ContentAuthor, (contentAuthors) => contentAuthors.Content, {
-    cascade: true,
-  })
+  @OneToMany(() => ContentAuthor, (contentAuthors) => contentAuthors.Content)
   ContentAuthors: ContentAuthor[];
 
   @OneToMany(
     () => ContentUpdateDay,
     (contentUpdateDays) => contentUpdateDays.Content,
-    { cascade: true },
   )
   ContentUpdateDays: ContentUpdateDay[];
 
-  @OneToMany(() => Episode, (episodes) => episodes.Content, { cascade: true })
+  @OneToMany(() => Episode, (episodes) => episodes.Content)
   Episodes: Episode[];
 
   static from(content: Webtoon, platform: Platform): Content {
-    console.log(content.summary);
     const contentEntity = new Content();
     contentEntity.type = content.type;
-    contentEntity.idx = parseInt(content.id);
+    contentEntity.uuid = `${getUniqueIdxByPlatform(platform.name)}${
+      content.id
+    }`;
     contentEntity.title = content.title;
     contentEntity.summary = content.summary;
     contentEntity.description = content.description;

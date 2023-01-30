@@ -1,5 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { env } from 'process';
 import { AppModule } from './app.module';
 import { setupSwagger } from './common/utils/swagger';
 import { TransformInterceptor } from './common/utils/transform.interceptor';
@@ -10,7 +11,7 @@ async function bootstrap() {
   setupSwagger(app);
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new TransformInterceptor());
-  await app.listen(3000);
+  await app.listen(process.env.PORT || 3000);
 
   if (module.hot) {
     module.hot.accept();

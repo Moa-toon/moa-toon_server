@@ -21,9 +21,9 @@ export class ContentGenre {
   })
   Content: Content;
 
-  static from(content: Content, genre: Genre): ContentGenre {
+  static from(contentIdx: number, genre: Genre): ContentGenre {
     const contentGenre = new ContentGenre();
-    contentGenre.Content = content;
+    contentGenre.ContentIdx = contentIdx;
     contentGenre.Genre = genre;
     return contentGenre;
   }

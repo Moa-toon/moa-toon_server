@@ -5,6 +5,7 @@ import {
   Platforms,
   PlatformType,
   UpdateDayCode,
+  UpdateDays,
   Webtoon,
   WebtoonAdditionalInfo,
   WebtoonEpisodeInfo,
@@ -72,7 +73,31 @@ export class ScrapeContentService {
       return weeklyDayWebtoons;
     } else if (updateDay === 'finished') {
       console.log('완결 웹툰 스크래핑 작업');
+      const pageCount = await this.getPageCount(
+        `${baseUrl}/finish`,
+        '#ct > div.section_list_toon > div.paging_type2 > em > span',
+      );
+      const pages = Array.from({ length: pageCount }, (_, i) => i + 1);
+      const webtoonsSimpleDataOfPages =
+        await this.scrapeNaverWebtoonsSimpleData(pages, UpdateDays.finished);
+      // 2차원 배열 => 1차원 배열
+      const webtoonsSimpleData = webtoonsSimpleDataOfPages.reduce(
+        (acc, curr) => [...acc, ...curr],
+      );
+      const webtoonsAdditionalData =
+        await this.scrapeNaverWebtoonsAdditionalData(webtoonsSimpleData);
+      const finishedWebtoons = this.makeWebtoonData(
+        webtoonsSimpleData,
+        webtoonsAdditionalData,
+      );
+      return finishedWebtoons;
     }
+  }
+
+  async getPageCount(url: string, selector: string): Promise<number> {
+    const htmlData = await this.getHtmlData(url);
+    const $ = this.loadHtml(htmlData);
+    return parseInt($(selector).text());
   }
 
   makeWebtoonData(
@@ -96,6 +121,22 @@ export class ScrapeContentService {
       }
     }
     return webtoons;
+  }
+
+  async scrapeNaverWebtoonsSimpleData(
+    pages: Array<number>,
+    updateDay: UpdateDayCode,
+  ) {
+    return Promise.all(
+      pages.map((pageNumber) => {
+        if (updateDay === UpdateDays.finished) {
+          return this.scrapeNaverWebtoonSimpleData(
+            `${this.NAVER_WEBTOON_URL}/finish?page=${pageNumber}&sort=UPDATE&genre=`,
+            UpdateDays.finished,
+          );
+        }
+      }),
+    );
   }
 
   async scrapeNaverWebtoonSimpleData(
@@ -160,14 +201,7 @@ export class ScrapeContentService {
     const pageCount = $('#ct > div.paging_type2 > em > span').text();
 
     // 회차 정보 수집
-    const episodes = [];
-    const episodeItemList = $('#ct > ul.section_episode_list li.item');
-    for (const episodeItem of episodeItemList) {
-      const episodeInfo = this.getWebtoonEpisode($, episodeItem);
-      episodes.push(episodeInfo);
-    }
-
-    const pages = Array.from({ length: parseInt(pageCount) }, (v, i) => i + 2);
+    const pages = Array.from({ length: parseInt(pageCount) }, (v, i) => i + 1);
     const episodesOfAllPages = await Promise.all(
       pages.map(async (page) => {
         return (async () => {
@@ -184,9 +218,9 @@ export class ScrapeContentService {
         })();
       }),
     );
-
-    episodesOfAllPages.forEach((episodesOfPage) =>
-      episodes.push(...episodesOfPage),
+    const episodes = episodesOfAllPages.reduce(
+      (acc, curr) => [...acc, ...curr],
+      [],
     );
     return {
       ageLimit,
