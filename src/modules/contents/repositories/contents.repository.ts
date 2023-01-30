@@ -1,8 +1,17 @@
+import { PlatformType } from 'src/common/types/contents';
 import { CustomRepository } from 'src/modules/db/typeorm-ex.decorator';
-import { FindOptionsWhere, InsertResult, Repository } from 'typeorm';
+import { FindOptionsWhere, InsertResult, Like, Repository } from 'typeorm';
 import { FindContentsOption } from '../dto/db';
+import { SortOptions, SortOptionType } from '../dto/request';
 import { Content } from '../entities/Content';
 
+interface SearchContentsOption {
+  genres?: string;
+  tags?: string;
+  platform?: PlatformType;
+  keyword?: string;
+  sortBy?: SortOptionType;
+}
 @CustomRepository(Content)
 export class ContentRepository extends Repository<Content> {
   async createContent(content: Content): Promise<InsertResult> {
@@ -162,5 +171,49 @@ export class ContentRepository extends Repository<Content> {
         idx: true,
       },
     });
+  }
+
+  async searchContentsBy(option: SearchContentsOption) {
+    const qb = this.createQueryBuilder('content')
+      .leftJoinAndSelect('content.Platform', 'platform')
+      .leftJoinAndSelect('content.ContentUpdateDays', 'contentUpdateDays')
+      .leftJoinAndSelect('contentUpdateDays.UpdateDay', 'updateDay');
+
+    if (option.keyword) {
+      qb.andWhere(`content.title like '%' :title '%'`, {
+        title: option.keyword,
+      });
+    } else {
+      if (option.genres) {
+        const genres = option.genres.split(',');
+        console.log(genres);
+        qb.leftJoin('content.ContentGenres', 'contentGenres').leftJoin(
+          'contentGenres.Genre',
+          'genre',
+        );
+        qb.andWhere('genre.name IN (:genreName)', { genreName: genres });
+      }
+      if (option.tags) {
+        const tags = option.tags.split(',');
+        qb.leftJoin('content.ContentTags', 'contentTags').leftJoin(
+          'contentTags.Tag',
+          'tag',
+        );
+        qb.andWhere('tag.name IN (:tagName)', { tagName: tags });
+      }
+    }
+
+    if (option.platform)
+      qb.andWhere('platform.name = :platformName', {
+        platformName: option.platform,
+      });
+
+    if (option.sortBy) {
+      if (option.sortBy === SortOptions.title) {
+        console.log('title 기준 오름차순 정렬');
+        qb.orderBy('content.title');
+      }
+    }
+    return qb.getManyAndCount();
   }
 }

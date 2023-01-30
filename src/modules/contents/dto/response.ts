@@ -70,7 +70,7 @@ export abstract class PaginationMetaData {
     description: '페이지 수',
     example: 1,
   })
-  pageCount: number;
+  pageCount?: number;
 }
 
 export abstract class ContentPaginationData {
