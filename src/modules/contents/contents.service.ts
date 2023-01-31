@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  Contents,
   GenreInfo,
   Platforms,
   PlatformType,
@@ -21,6 +22,7 @@ import {
   ContentDetail,
   ContentPaginationData,
   PaginationMetaData,
+  SearchOptions,
 } from './dto/response';
 import { Author } from './entities/Author';
 import { Content } from './entities/Content';
@@ -600,6 +602,42 @@ export class ContentsService {
       };
     } catch (error) {
       console.error(error);
+      return null;
+    }
+  }
+
+  async getSearchOptions(): Promise<SearchOptions> {
+    // {
+    //   "genres": [”개그”, “공포”, “드라마”, “로맨스”, … ],
+    //   "tags": [”가족”, “감동”, “게임”, “동물”, “동양풍”, … ],
+    //   "isFinished": [true, false],
+    //   "type": ["webtoon", "webNovel"],
+    //   "platforms": [“naver”, “kakao”, “kakaoPage”]
+    // }
+    try {
+      const genres = await this.genreRepo
+        .createQueryBuilder('g')
+        .where(`g.name != :name`, { name: '' })
+        .select('g.name')
+        .getMany();
+      const platforms = await this.platformRepo
+        .createQueryBuilder('p')
+        .where(`p.name != :name`, { name: '' })
+        .select('p.name')
+        .getMany();
+      const type = [Contents.webtoon, Contents.webNovel];
+      const isFinished = [true, false];
+      return {
+        genres: genres.length > 0 ? genres.map((genre) => genre.name) : [],
+        isFinished,
+        platforms:
+          platforms.length > 0
+            ? platforms.map((platform) => platform.name)
+            : [],
+        type,
+      };
+    } catch (err) {
+      console.error(err);
       return null;
     }
   }

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ContentType, PlatformType } from 'src/common/types/contents';
 
 abstract class Content {
   @ApiProperty({
@@ -260,6 +261,32 @@ export abstract class ContentsResponse {
     type: ContentPaginationData,
   })
   data: ContentPaginationData;
+
+  @ApiProperty({
+    type: String,
+  })
+  error: string;
+}
+
+export abstract class SearchOptions {
+  genres: Array<string>;
+  tags?: Array<string>;
+  isFinished: Array<boolean>;
+  type: Array<ContentType>;
+  platforms: Array<PlatformType>;
+}
+
+export abstract class SearchOptionsResponse {
+  @ApiProperty({
+    type: Number,
+    description: '상태코드',
+  })
+  statusCode: number;
+
+  @ApiProperty({
+    type: SearchOptions,
+  })
+  data: SearchOptions;
 
   @ApiProperty({
     type: String,
