@@ -13,7 +13,7 @@ import { ContentsController } from './modules/contents/contents.controller';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `envs/.env.${process.env.NODE_ENV}`,
+      envFilePath: `.env`,
       validationSchema: Joi.object({
         DATABASE_HOST: Joi.string().required(),
         DATABASE_PORT: Joi.number().required(),

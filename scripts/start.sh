@@ -1,0 +1,1 @@
+docker run -d --rm --name moatoon_server -p 8080:8080 -v /home/ubuntu/moatoon_server:/var/app moatoon_server:latest

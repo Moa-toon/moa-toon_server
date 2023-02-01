@@ -12,7 +12,11 @@ import {
   GetContentsReqQueryDto,
   SearchContentsReqQueryDto,
 } from './dto/request';
-import { ContentResponse, ContentsResponse } from './dto/response';
+import {
+  ContentResponse,
+  ContentsResponse,
+  SearchOptionsResponse,
+} from './dto/response';
 
 @ApiTags('콘텐츠 API')
 @Controller('contents')
@@ -62,6 +66,18 @@ export class ContentsController {
     if (contents.items.length === 0) return setRes(404);
     if (contents === null) return setRes(500);
     return setRes(200, contents);
+  }
+
+  @Get('/search/options')
+  @ApiOperation({ summary: '컨텐츠 검색 옵션 제공 API', description: '' })
+  @ApiOkResponse({
+    description: '성공',
+    type: SearchOptionsResponse,
+  })
+  async getSearchOptions() {
+    const options = await this.contentsService.getSearchOptions();
+    if (options === null) return setRes(500);
+    return setRes(200, options);
   }
 
   @Get('/:contentId')
