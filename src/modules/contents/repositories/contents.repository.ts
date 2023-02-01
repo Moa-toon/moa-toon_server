@@ -64,6 +64,9 @@ export class ContentRepository extends Repository<Content> {
         isUpdated: true,
         isNew: true,
         isAdult: true,
+        Platform: {
+          name: true,
+        },
       },
       relations: [
         'Platform',
@@ -186,7 +189,6 @@ export class ContentRepository extends Repository<Content> {
     } else {
       if (option.genres) {
         const genres = option.genres.split(',');
-        console.log(genres);
         qb.leftJoin('content.ContentGenres', 'contentGenres').leftJoin(
           'contentGenres.Genre',
           'genre',
@@ -210,7 +212,6 @@ export class ContentRepository extends Repository<Content> {
 
     if (option.sortBy) {
       if (option.sortBy === SortOptions.title) {
-        console.log('title 기준 오름차순 정렬');
         qb.orderBy('content.title');
       }
     }

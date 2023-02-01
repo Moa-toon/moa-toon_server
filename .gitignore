@@ -36,6 +36,7 @@ lerna-debug.log*
 
 # Env
 envs
+.env
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml

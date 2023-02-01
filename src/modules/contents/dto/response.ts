@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ContentType, PlatformType } from 'src/common/types/contents';
+import { number } from 'joi';
+import {
+  ContentType,
+  Platforms,
+  PlatformType,
+} from 'src/common/types/contents';
 
 abstract class Content {
   @ApiProperty({
@@ -7,6 +12,12 @@ abstract class Content {
     description: '인덱스',
   })
   idx: number;
+
+  @ApiProperty({
+    type: Platforms,
+    description: '플랫폼 타입',
+  })
+  platform: PlatformType;
 
   @ApiProperty({
     type: String,
@@ -56,6 +67,12 @@ abstract class Content {
     description: '19세 이상 여부',
   })
   isAdult: boolean;
+
+  @ApiProperty({
+    type: number,
+    description: '평균 평점',
+  })
+  avgRating: number;
 }
 
 export abstract class PaginationMetaData {
