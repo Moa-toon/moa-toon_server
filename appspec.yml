@@ -1,0 +1,14 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/ubuntu/moatoon_server
+
+hooks:
+  BeforeInstall:
+    - location: /scripts/initialize.sh
+  AfterInstall:
+    - location: /scripts/buildImage.sh
+      runas: root
+  ApplicationStart:
+    - location: /scripts/start.sh

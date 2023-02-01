@@ -33,8 +33,8 @@ export function getTypeOrmModule() {
           Episode,
         ],
         synchronize: !isProd ? true : false,
-        // logging: !isProd ? true : false,
-        logging: false,
+        logging: !isProd ? true : false,
+        // logging: false,
       };
     },
   });
