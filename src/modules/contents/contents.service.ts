@@ -9,6 +9,7 @@ import {
   UpdateDays,
   Webtoon,
 } from 'src/common/types/contents';
+import { generateRandomAvgRating } from 'src/common/utils/generateRandomAvgRating';
 import { getAgeLimitKor } from 'src/common/utils/getAgeLimitKor';
 import { getAuthorTypeKor } from 'src/common/utils/getAuthorTypeKor';
 import { getContentType } from 'src/common/utils/getContentType';
@@ -419,6 +420,7 @@ export class ContentsService {
         contents.length > 0
           ? contents.map((content) => ({
               idx: content.idx,
+              platform: content.Platform.name,
               title: content.title,
               summary: content.summary ?? '',
               ageLimit: content.ageLimit,
@@ -427,6 +429,7 @@ export class ContentsService {
               isNew: content.isNew,
               isAdult: content.isAdult,
               isUpdated: content.isUpdated,
+              avgRating: generateRandomAvgRating(0.0, 5.0, 1),
             }))
           : [];
       const meta: PaginationMetaData = {
@@ -583,6 +586,7 @@ export class ContentsService {
         contents.length > 0
           ? contents.map((content) => ({
               idx: content.idx,
+              platform: content.Platform.name,
               title: content.title,
               summary: content.summary ?? '',
               ageLimit: content.ageLimit,
@@ -591,6 +595,7 @@ export class ContentsService {
               isNew: content.isNew,
               isAdult: content.isAdult,
               isUpdated: content.isUpdated,
+              avgRating: generateRandomAvgRating(0.0, 5.0, 1),
             }))
           : [];
       const meta: PaginationMetaData = {
