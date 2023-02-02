@@ -23,11 +23,18 @@ export class Episode {
   title: string;
 
   @Column('varchar', {
-    name: 'pageUrl',
-    comment: '페이지 url',
+    name: 'urlOfPc',
+    comment: 'PC버전 페이지 url',
     length: 255,
   })
-  pageUrl: string;
+  urlOfPc: string;
+
+  @Column('varchar', {
+    name: 'urlOfMobile',
+    comment: 'Mobile버전 페이지 url',
+    length: 255,
+  })
+  urlOfMobile: string;
 
   @Column('varchar', {
     name: 'thumbnailUrl',
@@ -45,13 +52,12 @@ export class Episode {
   @Column('datetime', {
     name: 'createdAt',
     comment: '연재일',
-    default: () => 'CURRENT_TIMESTAMP',
+    nullable: true,
   })
-  createdAt: Date;
+  createdAt: Date | null;
 
   @ManyToOne(() => Content, (content) => content.Episodes, {
     onDelete: 'CASCADE',
-    onUpdate: 'CASCADE',
   })
   @JoinColumn({ name: 'contentIdx', referencedColumnName: 'idx' })
   Content: Content;
@@ -61,7 +67,8 @@ export class Episode {
     episode.ContentIdx = contentIdx;
     episode.order = episodeInfo.order;
     episode.title = episodeInfo.title;
-    episode.pageUrl = episodeInfo.url;
+    episode.urlOfPc = episodeInfo.urlOfPc;
+    episode.urlOfMobile = episodeInfo.urlOfMobile;
     episode.thumbnailUrl = episodeInfo.thumbnailUrl;
     episode.isFree = episodeInfo.isFree;
     episode.createdAt =

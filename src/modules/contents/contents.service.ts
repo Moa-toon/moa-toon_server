@@ -311,7 +311,7 @@ export class ContentsService {
           // contentEntity와 content 비교 후 데이터 업데이트
           contentEntity = this.compareAndUpdate(contentSelected, content);
         } else contentEntity = Content.from(content, platform);
-        const contentSaved = await contentRepo.upsert(contentEntity, ['uuid']);
+        const contentSaved = await contentRepo.createContent(contentEntity);
         // contentSaved
         const savedContentIdx = contentSaved.identifiers[0]['idx'];
         // contentAuthor
@@ -376,8 +376,9 @@ export class ContentsService {
               contentEntity.Episodes?.length > 0
                 ? contentEntity.Episodes.find(
                     (episode) =>
-                      episode.ContentIdx === contentEntity.idx &&
-                      episode.order === order,
+                      episode.title === episodeInfo.title &&
+                      episode.urlOfMobile === episodeInfo.urlOfMobile &&
+                      episode.urlOfPc === episodeInfo.urlOfPc,
                   )
                 : null;
             if (!contentEpisodeSelected) {
@@ -472,7 +473,8 @@ export class ContentsService {
       title: content.title,
       description: content.description,
       ageLimitKor: getAgeLimitKor(content.ageLimit),
-      pageUrl: content.urlOfMobile,
+      urlOfPc: content.urlOfPc,
+      urlOfMobile: content.urlOfMobile,
       thumbnailUrl: content.thumbnailPath,
       isNew: content.isNew,
       isUpdated: content.isUpdated,
@@ -486,7 +488,8 @@ export class ContentsService {
         items: content.Episodes.map((episode) => ({
           order: episode.order,
           title: episode.title,
-          pageUrl: episode.pageUrl,
+          urlOfPc: episode.urlOfPc,
+          urlOfMobile: episode.urlOfMobile,
           thumbnailUrl: episode.thumbnailUrl,
           isFree: episode.isFree,
           createdAt: episode.createdAt,
@@ -566,9 +569,14 @@ export class ContentsService {
           contentEntity[key] = contentDto.additional[key];
         }
       } else if (key === 'urlOfMobile') {
-        if (val !== contentDto.url) {
+        if (val !== contentDto.urlOfMobile) {
           console.log(`[${contentEntity.idx}] ${key} 데이터가 일치하지 않음.`);
-          contentEntity[key] = contentDto.url;
+          contentEntity[key] = contentDto.urlOfMobile;
+        }
+      } else if (key === 'urlOfPc') {
+        if (val !== contentDto.urlOfPc) {
+          console.log(`[${contentEntity.idx}] ${key} 데이터가 일치하지 않음.`);
+          contentEntity[key] = contentDto.urlOfPc;
         }
       }
     }

@@ -16,6 +16,7 @@ import { getAgeLimit } from 'src/common/utils/getAgeLimit';
 @Injectable()
 export class ScrapeContentService {
   private readonly NAVER_WEBTOON_BASE_URL = 'https://m.comic.naver.com';
+  private readonly NAVER_WEBTOON_PC_BASE_URL = 'https://comic.naver.com';
   private readonly NAVER_WEBTOON_URL = 'https://m.comic.naver.com/webtoon';
   private readonly weeklyDays = [
     'mon',
@@ -110,7 +111,9 @@ export class ScrapeContentService {
 
       for (let j = i; j < additionalData.length; j++) {
         const webtoonAdditionalData = additionalData[j];
-        if (webtoonSimpleData.url === webtoonAdditionalData.url) {
+        if (
+          webtoonSimpleData.urlOfMobile === webtoonAdditionalData.urlOfMobile
+        ) {
           const webtoon = {
             ...webtoonSimpleData,
             ...webtoonAdditionalData,
@@ -169,7 +172,7 @@ export class ScrapeContentService {
   ): Promise<Array<WebtoonAdditionalInfo>> {
     return Promise.all(
       webtoons.map((webtoon) =>
-        this.scrapeNaverWebtoonAdditionalData(webtoon.url),
+        this.scrapeNaverWebtoonAdditionalData(webtoon.urlOfMobile),
       ),
     );
   }
@@ -224,7 +227,7 @@ export class ScrapeContentService {
     );
     return {
       ageLimit,
-      url,
+      urlOfMobile: url,
       summary,
       description,
       genres: [mainGenre, subGenre],
@@ -295,7 +298,8 @@ export class ScrapeContentService {
       type: 0,
       title,
       authors,
-      url: `https://m.comic.naver.com${contentUrl}&sortOrder=ASC`,
+      urlOfPc: `https://comic.naver.com${contentUrl}&sortOrder=ASC`,
+      urlOfMobile: `https://m.comic.naver.com${contentUrl}&sortOrder=ASC`,
       thumbnailPath,
       platform: Platforms.naver,
       updateDays: [updateDay],
@@ -324,7 +328,8 @@ export class ScrapeContentService {
       '유료만화';
     return {
       title,
-      url: `${this.NAVER_WEBTOON_BASE_URL}${additionalUrl}`,
+      urlOfPc: `${this.NAVER_WEBTOON_PC_BASE_URL}${additionalUrl}`,
+      urlOfMobile: `${this.NAVER_WEBTOON_BASE_URL}${additionalUrl}`,
       thumbnailUrl,
       createDate,
       isFree,

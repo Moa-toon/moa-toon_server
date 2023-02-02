@@ -20,9 +20,7 @@ export class ContentRepository extends Repository<Content> {
       .into(Content)
       .values(content)
       .orUpdate(
-        ['uuid'],
         [
-          'title',
           'summary',
           'description',
           'ageLimit',
@@ -34,6 +32,7 @@ export class ContentRepository extends Repository<Content> {
           'urlOfMobile',
           'thumbnailPath',
         ],
+        ['uuid'],
       )
       .execute();
   }
@@ -87,6 +86,7 @@ export class ContentRepository extends Repository<Content> {
         summary: true,
         description: true,
         thumbnailPath: true,
+        urlOfPc: true,
         urlOfMobile: true,
         ageLimit: true,
         isUpdated: true,
@@ -98,7 +98,8 @@ export class ContentRepository extends Repository<Content> {
         Episodes: {
           order: true,
           title: true,
-          pageUrl: true,
+          urlOfPc: true,
+          urlOfMobile: true,
           thumbnailUrl: true,
           isFree: true,
           createdAt: true,
@@ -149,7 +150,8 @@ export class ContentRepository extends Repository<Content> {
         Episodes: {
           order: true,
           title: true,
-          pageUrl: true,
+          urlOfPc: true,
+          urlOfMobile: true,
           thumbnailUrl: true,
           isFree: true,
           createdAt: true,
