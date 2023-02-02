@@ -12,7 +12,6 @@ export class ContentUpdateDay {
 
   @ManyToOne(() => Content, (content) => content.ContentUpdateDays, {
     onDelete: 'CASCADE',
-    onUpdate: 'CASCADE',
   })
   Content: Content;
 

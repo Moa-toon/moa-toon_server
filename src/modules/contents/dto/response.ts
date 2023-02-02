@@ -140,9 +140,15 @@ export abstract class Episode {
 
   @ApiProperty({
     type: String,
-    description: '페이지 url',
+    description: 'PC버전 홈페이지 url',
   })
-  pageUrl: string;
+  urlOfPc: string;
+
+  @ApiProperty({
+    type: String,
+    description: 'Mobile버전 홈페이지 url',
+  })
+  urlOfMobile: string;
 
   @ApiProperty({
     type: String,
@@ -209,9 +215,15 @@ export abstract class ContentDetail {
 
   @ApiProperty({
     type: String,
-    description: '홈페이지 url',
+    description: 'PC버전 홈페이지 url',
   })
-  pageUrl: string;
+  urlOfPc: string;
+
+  @ApiProperty({
+    type: String,
+    description: 'Mobile버전 홈페이지 url',
+  })
+  urlOfMobile: string;
 
   @ApiProperty({
     type: String,

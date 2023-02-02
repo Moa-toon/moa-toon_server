@@ -29,7 +29,8 @@ export type WebtoonSimpleInfo = {
   type: number;
   title: string;
   authors: Array<string>;
-  url: string;
+  urlOfPc: string;
+  urlOfMobile: string;
   thumbnailPath: string;
   platform: PlatformType;
   updateDays: Array<UpdateDayCode>;
@@ -44,7 +45,8 @@ export type WebtoonSimpleInfo = {
 export type WebtoonEpisodeInfo = {
   order?: number;
   title: string;
-  url: string;
+  urlOfPc: string;
+  urlOfMobile: string;
   thumbnailUrl: string;
   createDate: string;
   isFree: boolean;
@@ -52,7 +54,7 @@ export type WebtoonEpisodeInfo = {
 
 export type WebtoonAdditionalInfo = {
   ageLimit: number;
-  url: string;
+  urlOfMobile: string;
   summary: string;
   description: string;
   genres: Array<string>;

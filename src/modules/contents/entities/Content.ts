@@ -8,6 +8,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  Unique,
 } from 'typeorm';
 import { ContentAuthor } from './ContentAuthor';
 import { ContentGenre } from './ContentGenre';
@@ -16,6 +17,7 @@ import { Episode } from './Episode';
 import { Platform } from './Platform';
 
 @Entity('content')
+@Unique(['uuid'])
 export class Content {
   @PrimaryGeneratedColumn({ type: 'int', name: 'idx', comment: '인덱스' })
   idx: number;
@@ -154,7 +156,8 @@ export class Content {
     contentEntity.title = content.title;
     contentEntity.summary = content.summary;
     contentEntity.description = content.description;
-    contentEntity.urlOfMobile = content.url;
+    contentEntity.urlOfPc = content.urlOfPc;
+    contentEntity.urlOfMobile = content.urlOfMobile;
     contentEntity.isAdult = content.additional.isAdult;
     contentEntity.isNew = content.additional.isNew;
     contentEntity.isPaused = content.additional.isPaused;
