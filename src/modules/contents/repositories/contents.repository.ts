@@ -170,6 +170,11 @@ export class ContentRepository extends Repository<Content> {
         'Episodes',
       ],
       where: { uuid },
+      order: {
+        Episodes: {
+          order: 'DESC',
+        },
+      },
     });
   }
 
