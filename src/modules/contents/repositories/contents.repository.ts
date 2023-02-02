@@ -136,6 +136,7 @@ export class ContentRepository extends Repository<Content> {
     return this.findOne({
       select: {
         idx: true,
+        uuid: true,
         title: true,
         summary: true,
         description: true,
@@ -175,7 +176,7 @@ export class ContentRepository extends Repository<Content> {
   async findContentIds() {
     return this.find({
       select: {
-        idx: true,
+        uuid: true,
       },
     });
   }

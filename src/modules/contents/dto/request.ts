@@ -70,14 +70,14 @@ export class GetContentsReqQueryDto implements PaginationOptions {
 
 export class GetContentReqParamDto {
   @ApiProperty({
-    type: Number,
-    description: '컨텐츠 인덱스 번호',
-    example: 1,
+    type: String,
+    description: '컨텐츠 UUID',
+    example: '10000758037',
     required: true,
   })
   @IsNumberString()
   @IsNotEmpty()
-  readonly contentId: number;
+  readonly contentId: string;
 }
 
 export const SortOptions = {

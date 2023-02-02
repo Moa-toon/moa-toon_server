@@ -457,12 +457,12 @@ export class ContentsService {
     return this.contentRepo.findContentDetailByTitle(title);
   }
 
-  async getContentDetailById(contentId: number): Promise<ContentDetail> {
-    const content = await this.contentRepo.findContentDetailById(contentId);
+  async getContentDetailById(contentId: string): Promise<ContentDetail> {
+    const content = await this.contentRepo.findContentDetailByUUID(contentId);
     if (!content) return null;
 
     const result = {
-      idx: content.idx,
+      idx: parseInt(content.uuid),
       genre: {
         main: content.ContentGenres.find(
           (contentGenre) => contentGenre.Genre.parentIdx === 0,
@@ -509,7 +509,7 @@ export class ContentsService {
     const contentsSelected = await this.contentRepo.findContentIds();
     const ids =
       contentsSelected.length > 0
-        ? contentsSelected.map((content) => content.idx)
+        ? contentsSelected.map((content) => parseInt(content.uuid))
         : [];
     return ids;
   }
