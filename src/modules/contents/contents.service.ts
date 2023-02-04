@@ -405,7 +405,7 @@ export class ContentsService {
   async getContents(
     query: GetContentsReqQueryDto,
   ): Promise<ContentPaginationData> {
-    const { type, platform, updateDay, page, take } = query;
+    const { type, platform, updateDay, page, take, sortBy } = query;
 
     try {
       const [contents, totalCount] =
@@ -415,6 +415,7 @@ export class ContentsService {
           updateDay,
           page,
           take,
+          sortBy,
         });
 
       const items =
@@ -434,6 +435,10 @@ export class ContentsService {
               avgRating: generateRandomAvgRating(0.0, 5.0, 1),
             }))
           : [];
+
+      if (query.sortBy === 'avg_rating') {
+        items.sort((a, b) => b.avgRating - a.avgRating);
+      }
       const meta: PaginationMetaData = {
         totalCount,
         pageCount: Math.ceil(totalCount / take),

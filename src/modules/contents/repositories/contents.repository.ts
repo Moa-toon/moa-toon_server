@@ -1,4 +1,5 @@
 import { PlatformType } from 'src/common/types/contents';
+import { getContentType } from 'src/common/utils/getContentType';
 import { CustomRepository } from 'src/modules/db/typeorm-ex.decorator';
 import { FindOptionsWhere, InsertResult, Like, Repository } from 'typeorm';
 import { FindContentsOption } from '../dto/db';
@@ -46,37 +47,61 @@ export class ContentRepository extends Repository<Content> {
   }
 
   async findContentsWithCount(option: FindContentsOption) {
-    const whereOption: FindOptionsWhere<Content> = {};
-    if (option.type) whereOption.type = option.type;
-    if (option.platform) whereOption.Platform = { name: option.platform };
-    if (option.updateDay)
-      whereOption.ContentUpdateDays = { UpdateDay: { name: option.updateDay } };
+    console.log(option);
+    const qb = this.createQueryBuilder('content')
+      .leftJoinAndSelect('content.Platform', 'platform')
+      .leftJoinAndSelect('content.ContentUpdateDays', 'contentUpdateDays')
+      .leftJoinAndSelect('contentUpdateDays.UpdateDay', 'updateDay');
 
-    return this.findAndCount({
-      select: {
-        idx: true,
-        title: true,
-        summary: true,
-        thumbnailPath: true,
-        urlOfPc: true,
-        urlOfMobile: true,
-        ageLimit: true,
-        isUpdated: true,
-        isNew: true,
-        isAdult: true,
-        Platform: {
-          name: true,
-        },
-      },
-      relations: [
-        'Platform',
-        'ContentUpdateDays',
-        'ContentUpdateDays.UpdateDay',
-      ],
-      where: whereOption,
-      take: option.take,
-      skip: option.take * (option.page - 1),
-    });
+    if (option.type) {
+      qb.andWhere('type = :type', { type: option.type });
+    }
+    if (option.platform) {
+      qb.andWhere('platform.name = :platformName', {
+        platformName: option.platform,
+      });
+    }
+    if (option.updateDay) {
+      qb.andWhere('updateDay.name = :name', { name: option.updateDay });
+    }
+    if (option.sortBy) {
+      if (option.sortBy === SortOptions.avg_rating) {
+      }
+    }
+    if (option.take) qb.take(option.take);
+    if (option.page) qb.skip(option.take * (option.page - 1));
+    return qb.getManyAndCount();
+
+    // const whereOption: FindOptionsWhere<Content> = {};
+    // if (option.type) whereOption.type = option.type;
+    // if (option.platform) whereOption.Platform = { name: option.platform };
+    // if (option.updateDay)
+    //   whereOption.ContentUpdateDays = { UpdateDay: { name: option.updateDay } };
+    // return this.findAndCount({
+    //   select: {
+    //     idx: true,
+    //     title: true,
+    //     summary: true,
+    //     thumbnailPath: true,
+    //     urlOfPc: true,
+    //     urlOfMobile: true,
+    //     ageLimit: true,
+    //     isUpdated: true,
+    //     isNew: true,
+    //     isAdult: true,
+    //     Platform: {
+    //       name: true,
+    //     },
+    //   },
+    //   relations: [
+    //     'Platform',
+    //     'ContentUpdateDays',
+    //     'ContentUpdateDays.UpdateDay',
+    //   ],
+    //   where: whereOption,
+    //   take: option.take,
+    //   skip: option.take * (option.page - 1),
+    // });
   }
 
   async findContentDetailById(idx: number): Promise<Content> {
