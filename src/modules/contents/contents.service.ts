@@ -405,7 +405,7 @@ export class ContentsService {
   async getContents(
     query: GetContentsReqQueryDto,
   ): Promise<ContentPaginationData> {
-    const { type, platform, updateDay, page, take } = query;
+    const { type, platform, updateDay, page, take, sortBy } = query;
 
     try {
       const [contents, totalCount] =
@@ -415,6 +415,7 @@ export class ContentsService {
           updateDay,
           page,
           take,
+          sortBy,
         });
 
       const items =
@@ -425,7 +426,8 @@ export class ContentsService {
               title: content.title,
               summary: content.summary ?? '',
               ageLimit: content.ageLimit,
-              pageUrl: content.urlOfMobile,
+              urlOfPc: content.urlOfPc,
+              urlOfMobile: content.urlOfMobile,
               thumbnailUrl: content.thumbnailPath,
               isNew: content.isNew,
               isAdult: content.isAdult,
@@ -433,6 +435,10 @@ export class ContentsService {
               avgRating: generateRandomAvgRating(0.0, 5.0, 1),
             }))
           : [];
+
+      if (query.sortBy === 'avg_rating') {
+        items.sort((a, b) => b.avgRating - a.avgRating);
+      }
       const meta: PaginationMetaData = {
         totalCount,
         pageCount: Math.ceil(totalCount / take),
@@ -456,12 +462,12 @@ export class ContentsService {
     return this.contentRepo.findContentDetailByTitle(title);
   }
 
-  async getContentDetailById(contentId: number): Promise<ContentDetail> {
-    const content = await this.contentRepo.findContentDetailById(contentId);
+  async getContentDetailById(contentId: string): Promise<ContentDetail> {
+    const content = await this.contentRepo.findContentDetailByUUID(contentId);
     if (!content) return null;
 
     const result = {
-      idx: content.idx,
+      idx: parseInt(content.uuid),
       genre: {
         main: content.ContentGenres.find(
           (contentGenre) => contentGenre.Genre.parentIdx === 0,
@@ -508,7 +514,7 @@ export class ContentsService {
     const contentsSelected = await this.contentRepo.findContentIds();
     const ids =
       contentsSelected.length > 0
-        ? contentsSelected.map((content) => content.idx)
+        ? contentsSelected.map((content) => parseInt(content.uuid))
         : [];
     return ids;
   }
@@ -598,7 +604,8 @@ export class ContentsService {
               title: content.title,
               summary: content.summary ?? '',
               ageLimit: content.ageLimit,
-              pageUrl: content.urlOfMobile,
+              urlOfPc: content.urlOfPc,
+              urlOfMobile: content.urlOfMobile,
               thumbnailUrl: content.thumbnailPath,
               isNew: content.isNew,
               isAdult: content.isAdult,

@@ -40,9 +40,15 @@ abstract class Content {
 
   @ApiProperty({
     type: String,
-    description: '홈페이지 url',
+    description: 'PC버전 홈페이지 url',
   })
-  pageUrl: string;
+  urlOfPc: string;
+
+  @ApiProperty({
+    type: String,
+    description: 'Mobile버전 홈페이지 url',
+  })
+  urlOfMobile: string;
 
   @ApiProperty({
     type: String,
