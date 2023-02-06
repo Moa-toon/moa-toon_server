@@ -421,7 +421,7 @@ export class ContentsService {
       const items =
         contents.length > 0
           ? contents.map((content) => ({
-              idx: content.idx,
+              idx: parseInt(content.uuid),
               platform: content.Platform.name,
               title: content.title,
               summary: content.summary ?? '',
@@ -599,7 +599,7 @@ export class ContentsService {
       const items =
         contents.length > 0
           ? contents.map((content) => ({
-              idx: content.idx,
+              idx: parseInt(content.uuid),
               platform: content.Platform.name,
               title: content.title,
               summary: content.summary ?? '',
