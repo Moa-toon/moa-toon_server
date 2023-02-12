@@ -1,20 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { load } from 'cheerio';
-import { KAKAO_WEBTOON_API_BASE_URL } from 'src/common/common.constant';
 import {
+  KAKAO_WEBTOON_API_BASE_URL,
+  KAKAO_WEBTOON_BASE_URL,
+} from 'src/common/common.constant';
+import {
+  Contents,
   OriginalType,
   OriginalTypeCode,
   Platforms,
   PlatformType,
   UpdateDayCode,
   UpdateDays,
+  UpdateWeekDaysKor,
   Webtoon,
   WebtoonAdditionalInfo,
+  WebtoonAuthorType,
   WebtoonEpisodeInfo,
   WebtoonSimpleInfo,
 } from 'src/common/types/contents';
+import { extractContentId } from 'src/common/utils/extractContentId';
 import { getAgeLimit } from 'src/common/utils/getAgeLimit';
+import { getContentType } from 'src/common/utils/getContentType';
 
 @Injectable()
 export class ScrapeContentService {
@@ -75,9 +83,7 @@ export class ScrapeContentService {
     }
   }
 
-  async getKakaoWebtoons(baseUrl: string, updateDay: UpdateDayCode) {
-    console.log(baseUrl, updateDay);
-  }
+  async getKakaoWebtoons(baseUrl: string, updateDay: UpdateDayCode) {}
 
   async getNaverWebtoons(baseUrl: string, updateDay: UpdateDayCode) {
     if (updateDay === 'daily') {
@@ -152,9 +158,7 @@ export class ScrapeContentService {
 
       for (let j = i; j < additionalData.length; j++) {
         const webtoonAdditionalData = additionalData[j];
-        if (
-          webtoonSimpleData.urlOfMobile === webtoonAdditionalData.urlOfMobile
-        ) {
+        if (webtoonSimpleData.id === webtoonAdditionalData.contentId) {
           const webtoon = {
             ...webtoonSimpleData,
             ...webtoonAdditionalData,
@@ -224,6 +228,7 @@ export class ScrapeContentService {
     // url에 대해 axios.get 요청
     const htmlData = await this.getHtmlData(url);
     const $ = this.loadHtml(htmlData);
+    const contentId = extractContentId(url);
     const summary = $('.section_toon_info .info_front .summary').text().trim();
     const description = $('.section_toon_info .info_back > .summary > p')
       .text()
@@ -267,8 +272,8 @@ export class ScrapeContentService {
       [],
     );
     return {
+      contentId: parseInt(contentId) ?? 0,
       ageLimit,
-      urlOfMobile: url,
       summary,
       description,
       genres: [mainGenre, subGenre],
@@ -326,7 +331,11 @@ export class ScrapeContentService {
       .text()
       .replace(/\n/g, '')
       .replace(/\t/g, '')
-      .split(' / ');
+      .split(' / ')
+      .map((authorName) => ({
+        name: authorName,
+        type: WebtoonAuthorType.COMMON,
+      }));
     const badgeAreaText = webtoonElem.find('span.area_badge').text();
     const isNewWebtoon = badgeAreaText.includes('신작');
     const isAdultWebtoon = badgeAreaText.includes('청유물');
@@ -335,7 +344,7 @@ export class ScrapeContentService {
     const isPausedWebtoon = titleBoxText.includes('휴재');
     const isUpdatedWebtoon = titleBoxText.includes('업데이트');
     return {
-      id: contentId,
+      id: parseInt(contentId) ?? 0,
       type: 0,
       title,
       authors,
