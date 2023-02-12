@@ -577,6 +577,8 @@ export class ContentsService {
           'description',
           'ageLimit',
           'thumbnailPath',
+          'urlOfPc',
+          'urlOfMobile',
         ].includes(key)
       ) {
         if (val !== contentDto[key]) {
@@ -587,16 +589,6 @@ export class ContentsService {
         if (val !== contentDto.additional[key]) {
           console.log(`[${contentEntity.idx}] ${key} 데이터가 일치하지 않음.`);
           contentEntity[key] = contentDto.additional[key];
-        }
-      } else if (key === 'urlOfMobile') {
-        if (val !== contentDto.urlOfMobile) {
-          console.log(`[${contentEntity.idx}] ${key} 데이터가 일치하지 않음.`);
-          contentEntity[key] = contentDto.urlOfMobile;
-        }
-      } else if (key === 'urlOfPc') {
-        if (val !== contentDto.urlOfPc) {
-          console.log(`[${contentEntity.idx}] ${key} 데이터가 일치하지 않음.`);
-          contentEntity[key] = contentDto.urlOfPc;
         }
       }
     }
