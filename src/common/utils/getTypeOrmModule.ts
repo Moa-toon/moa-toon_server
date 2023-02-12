@@ -3,10 +3,12 @@ import { Author } from 'src/modules/contents/entities/Author';
 import { Content } from 'src/modules/contents/entities/Content';
 import { ContentAuthor } from 'src/modules/contents/entities/ContentAuthor';
 import { ContentGenre } from 'src/modules/contents/entities/ContentGenre';
+import { ContentTag } from 'src/modules/contents/entities/ContentTag';
 import { ContentUpdateDay } from 'src/modules/contents/entities/ContentUpdateDay';
 import { Episode } from 'src/modules/contents/entities/Episode';
 import { Genre } from 'src/modules/contents/entities/Genre';
 import { Platform } from 'src/modules/contents/entities/Platform';
+import { Tag } from 'src/modules/contents/entities/Tag';
 import { UpdateDay } from 'src/modules/contents/entities/UpdateDay';
 
 // app의 DB 설정 및 TypeOrm Entity 설정에 대한 값 설정을 한다.
@@ -31,6 +33,8 @@ export function getTypeOrmModule() {
           ContentGenre,
           ContentUpdateDay,
           Episode,
+          Tag,
+          ContentTag,
         ],
         synchronize: !isProd ? true : false,
         logging: !isProd ? true : false,
