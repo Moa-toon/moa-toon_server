@@ -10,7 +10,7 @@ import {
   UpdateWeekDaysKor,
   Webtoon,
 } from 'src/common/types/contents';
-import { WebtoonAuthor } from 'src/common/types/kakao-content';
+import { WebtoonAuthor } from 'src/common/types/contents';
 import { generateRandomAvgRating } from 'src/common/utils/generateRandomAvgRating';
 import { getAgeLimitKor } from 'src/common/utils/getAgeLimitKor';
 import { getAuthorTypeKor } from 'src/common/utils/getAuthorTypeKor';

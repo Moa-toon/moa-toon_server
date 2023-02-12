@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import axios from 'axios';
 import { load } from 'cheerio';
 import {
+  kakaoWebtoonAxiosConfig,
   KAKAO_WEBTOON_API_BASE_URL,
   KAKAO_WEBTOON_BASE_URL,
+  KAKAO_WEBTOON_DETAIL_API_BASE_URL,
+  KAKAO_WEBTOON_EPISODE_API_BASE_URL,
+  KAKAO_WEBTOON_EPISODE_BASE_URL,
 } from 'src/common/common.constant';
 import {
   Contents,
@@ -23,6 +27,7 @@ import {
 import { extractContentId } from 'src/common/utils/extractContentId';
 import { getAgeLimit } from 'src/common/utils/getAgeLimit';
 import { getContentType } from 'src/common/utils/getContentType';
+import { SortOption } from '../admin/dto/request';
 
 @Injectable()
 export class ScrapeContentService {
@@ -62,6 +67,10 @@ export class ScrapeContentService {
     }
   }
 
+  getKakaoWebtoonEpisodeUrl = (contentId: number, sortOption: SortOption) => {
+    return `${KAKAO_WEBTOON_EPISODE_API_BASE_URL}/${contentId}/episodes?offset=${sortOption.offset}&limit=${sortOption.limit}`;
+  };
+
   async getContentsByPlatform(
     platform: PlatformType,
     updateDay: UpdateDayCode,
@@ -88,6 +97,12 @@ export class ScrapeContentService {
       baseUrl,
       updateDay,
     );
+    const additionalData = await this.scrapeKakaoWebtoonsAdditionalData(
+      simpleData,
+      kakaoWebtoonAxiosConfig,
+    );
+    const webtoons = this.makeWebtoonData(simpleData, additionalData);
+    return webtoons;
   }
 
   async getNaverWebtoons(baseUrl: string, updateDay: UpdateDayCode) {
@@ -462,5 +477,75 @@ export class ScrapeContentService {
       });
     }
     return webtoonsSimpleInfo;
+  }
+
+  async scrapeKakaoWebtoonsAdditionalData(webtoons: any, axiosConfig: any) {
+    return await Promise.all(
+      webtoons.map((webtoon) =>
+        this.scrapeKakaoWebtoonAdditionalData(
+          `${KAKAO_WEBTOON_DETAIL_API_BASE_URL}/${webtoon.id}`,
+          axiosConfig,
+        ),
+      ),
+    ).catch((err) => {
+      console.error(err);
+      throw new InternalServerErrorException();
+    });
+  }
+
+  async scrapeKakaoWebtoonAdditionalData(
+    url: string,
+    axiosConfig: any,
+  ): Promise<WebtoonAdditionalInfo> {
+    const result = await axios.get(url);
+    const data = result.data.data;
+    const contentId = data.id;
+    const main = data.genre;
+
+    const episodes = await this.getKakaoWebtoonEpisodes(contentId, axiosConfig);
+    return {
+      contentId,
+      genres: [main],
+      episodes,
+    };
+  }
+
+  async getKakaoWebtoonEpisodes(
+    contentId: number,
+    axiosConfig: any,
+  ): Promise<WebtoonEpisodeInfo[]> {
+    const episodes = [];
+    let isLast = false;
+    let limit = 100;
+    let page = 1;
+    while (!isLast) {
+      const episodeUrl = this.getKakaoWebtoonEpisodeUrl(contentId, {
+        offset: limit * (page - 1),
+        limit,
+      });
+      const episodeResult = await axios.get(episodeUrl, axiosConfig);
+      const episodesInfo = episodeResult.data.data.episodes;
+      for (const episodeInfo of episodesInfo) {
+        const order = episodeInfo.no;
+        const title = episodeInfo.title;
+        const isFree = episodeInfo.useType === 'FREE' ? true : false;
+        const thumbnailUrl = `${episodeInfo.asset.thumbnailImage}.webp`;
+        const createDate = episodeInfo.serialStartDateTime;
+        const url = `${KAKAO_WEBTOON_EPISODE_BASE_URL}/${episodeInfo.seoId}/${episodeInfo.id}`;
+        episodes.push({
+          order,
+          title,
+          thumbnailUrl,
+          urlOfPc: url,
+          urlOfMobile: url,
+          isFree,
+          createDate,
+        });
+      }
+      const paginationInfo = episodeResult.data.meta.pagination;
+      isLast = paginationInfo.last;
+      page++;
+    }
+    return episodes;
   }
 }

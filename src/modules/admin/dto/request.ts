@@ -52,3 +52,8 @@ export class ScrapeContentsReqQueryDto {
   @IsNotEmpty()
   readonly updateDay: UpdateDayCode;
 }
+
+export type SortOption = {
+  offset: number;
+  limit: number;
+};
