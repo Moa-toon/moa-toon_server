@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { load } from 'cheerio';
+import { KAKAO_WEBTOON_API_BASE_URL } from 'src/common/common.constant';
 import {
+  OriginalType,
+  OriginalTypeCode,
   Platforms,
   PlatformType,
   UpdateDayCode,
@@ -28,14 +31,52 @@ export class ScrapeContentService {
     'sun',
   ];
 
+  getKakaoContentApiAdditionalUrl(
+    originalType: OriginalTypeCode,
+    updateDay: UpdateDayCode,
+  ) {
+    if (originalType === OriginalType.webtoon) {
+      if (updateDay === UpdateDays.finished) {
+        // finished: /sections?placement=channel_completed
+        return 'sections?placement=channel_completed';
+      } else {
+        // weekday: /pages/general-weekdays
+        return 'pages/general-weekdays';
+      }
+    } else if (originalType === OriginalType.novel) {
+      if (updateDay === UpdateDays.finished) {
+        // finished: /sections?placement=novel_completed
+        return 'sections?placement=novel_completed';
+      } else {
+        // weekday: /pages/novel-weekdays
+        return 'pages/novel-weekdays';
+      }
+    }
+  }
+
   async getContentsByPlatform(
     platform: PlatformType,
     updateDay: UpdateDayCode,
+    originalType: OriginalTypeCode,
   ) {
-    if (platform === 'naver') {
+    if (platform === Platforms.naver) {
       console.log('네이버 웹툰');
       return this.getNaverWebtoons(this.NAVER_WEBTOON_URL, updateDay);
+    } else if (platform === Platforms.kakao) {
+      console.log('카카오 웹툰');
+      const additionalUrl = this.getKakaoContentApiAdditionalUrl(
+        originalType,
+        updateDay,
+      );
+      return this.getKakaoWebtoons(
+        `${KAKAO_WEBTOON_API_BASE_URL}/${additionalUrl}`,
+        updateDay,
+      );
     }
+  }
+
+  async getKakaoWebtoons(baseUrl: string, updateDay: UpdateDayCode) {
+    console.log(baseUrl, updateDay);
   }
 
   async getNaverWebtoons(baseUrl: string, updateDay: UpdateDayCode) {
