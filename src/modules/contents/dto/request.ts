@@ -35,55 +35,7 @@ export const SortOptions = {
 } as const;
 export type SortOptionType = typeof SortOptions[keyof typeof SortOptions];
 
-export class SearchContentsReqQueryDto {
-  @ApiProperty({
-    type: String,
-    description: '장르(두 개 이상은 ,로 구분)',
-    example: '드라마,로맨스',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  genres?: string;
-  @ApiProperty({
-    type: String,
-    description: '태그(두 개 이상은 ,로 구분)',
-    example: '가족,감동',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  tags?: string;
-  @ApiProperty({
-    type: String,
-    description: '콘텐츠 제공 플랫폼',
-    enum: Platforms,
-    required: false,
-  })
-  @IsOptional()
-  @IsEnum(Platforms)
-  platform?: PlatformType;
-  @ApiProperty({
-    type: String,
-    description: '검색어',
-    example: '갓오브',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  keyword?: string;
-  @ApiProperty({
-    type: String,
-    description: '컨텐츠 정렬 기준',
-    enum: SortOptions,
-    required: false,
-  })
-  @IsOptional()
-  @IsEnum(SortOptions)
-  sortBy?: SortOptionType;
-}
-
-export class GetContentsReqQueryDto implements PaginationOptions {
+abstract class GetContentsQuery {
   @ApiProperty({
     type: String,
     description: '콘텐츠 타입',
@@ -113,7 +65,54 @@ export class GetContentsReqQueryDto implements PaginationOptions {
   @IsEnum(UpdateDays)
   @IsOptional()
   readonly updateDay: UpdateDayCode;
+}
 
+export abstract class SearchContentsReqQueryDto extends GetContentsQuery {
+  @ApiProperty({
+    type: String,
+    description: '장르(두 개 이상은 ,로 구분)',
+    example: '드라마,로맨스',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  genres?: string;
+
+  @ApiProperty({
+    type: String,
+    description: '태그(두 개 이상은 ,로 구분)',
+    example: '가족,감동',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  tags?: string;
+
+  @ApiProperty({
+    type: String,
+    description: '검색어',
+    example: '갓오브',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  keyword?: string;
+
+  @ApiProperty({
+    type: String,
+    description: '컨텐츠 정렬 기준',
+    enum: SortOptions,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(SortOptions)
+  sortBy?: SortOptionType;
+}
+
+export class GetContentsReqQueryDto
+  extends GetContentsQuery
+  implements PaginationOptions
+{
   @ApiProperty({
     type: Number,
     description: '페이지',
