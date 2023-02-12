@@ -83,7 +83,12 @@ export class ScrapeContentService {
     }
   }
 
-  async getKakaoWebtoons(baseUrl: string, updateDay: UpdateDayCode) {}
+  async getKakaoWebtoons(baseUrl: string, updateDay: UpdateDayCode) {
+    const simpleData = await this.scrapeKakaoWebtoonSimpleData(
+      baseUrl,
+      updateDay,
+    );
+  }
 
   async getNaverWebtoons(baseUrl: string, updateDay: UpdateDayCode) {
     if (updateDay === 'daily') {
@@ -384,5 +389,78 @@ export class ScrapeContentService {
       createDate,
       isFree,
     };
+  }
+
+  async scrapeKakaoWebtoonSimpleData(
+    url: string,
+    updateDay: UpdateDayCode,
+  ): Promise<WebtoonSimpleInfo[]> {
+    const result = await axios.get(url);
+    const data = result.data.data;
+
+    if (updateDay === UpdateDays.finished) {
+      const contents = data[0]['cardGroups'][0]['cards'];
+      return this.getKakaoWebtoonsSimpleInfo(contents, updateDay);
+    } else {
+      for (const section of data.sections) {
+        // 요일 별 데이터 처리
+        if (updateDay === UpdateWeekDaysKor[section.title]) {
+          const contents = section.cardGroups[0]['cards'];
+          return this.getKakaoWebtoonsSimpleInfo(contents, updateDay);
+        }
+      }
+    }
+  }
+
+  getKakaoWebtoonsSimpleInfo(
+    contents: any,
+    updateDay: UpdateDayCode,
+  ): WebtoonSimpleInfo[] {
+    const webtoonsSimpleInfo = [];
+    for (const { content, additional } of contents) {
+      const id = content.id;
+      const type = getContentType(Contents.webtoon);
+      const ageLimit = content.ageLimit;
+      const title = content.title;
+      const summary = content.catchphraseTwoLines;
+      const description = content.synopsis;
+      const authors = content.authors;
+      const tags = content.seoKeywords;
+      const thumbnailPath = `${content.featuredCharacterImageA}.webp`;
+      const platform = Platforms.kakao;
+      const startedAt = content.serialStartDateTime;
+      const isNew = additional.new;
+      const isUpdated = additional.up;
+      const isAdult = additional.adult;
+      const isPaused = additional.rest;
+      const url = `${KAKAO_WEBTOON_BASE_URL}/${title}/${id}`;
+
+      webtoonsSimpleInfo.push({
+        id,
+        type,
+        ageLimit,
+        title,
+        summary,
+        description,
+        authors: authors.map((author) => ({
+          name: author.name,
+          type: WebtoonAuthorType[author.type],
+        })),
+        urlOfPc: url,
+        urlOfMobile: url,
+        thumbnailPath,
+        platform,
+        updateDays: [updateDay],
+        additional: {
+          isNew,
+          isAdult,
+          isPaused,
+          isUpdated,
+        },
+        tags,
+        startedAt,
+      });
+    }
+    return webtoonsSimpleInfo;
   }
 }
