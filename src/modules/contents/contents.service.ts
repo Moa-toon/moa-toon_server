@@ -110,7 +110,9 @@ export class ContentsService {
     for (const webtoon of webtoons) {
       for (const author of webtoon.authors) {
         const isNameExist = authors.find(
-          (authorSaved) => authorSaved.name == author.name,
+          (authorSaved) =>
+            authorSaved.name === author.name &&
+            authorSaved.type === author.type,
         );
         if (author.name !== '' && !isNameExist) authors.push(author);
       }
@@ -194,7 +196,10 @@ export class ContentsService {
   async saveAuthors(authors: Array<WebtoonAuthor>) {
     try {
       for (const author of authors) {
-        const authorSelected = await this.findAuthorByName(author.name);
+        const authorSelected = await this.authorRepo.findBy({
+          name: author.name,
+          type: author.type,
+        });
         if (authorSelected) continue;
         await this.saveAuthor(Author.from(author.name, author.type));
       }
