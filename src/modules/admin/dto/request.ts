@@ -1,8 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import {
   Contents,
   ContentType,
+  OriginalType,
+  OriginalTypeCode,
   Platforms,
   PlatformType,
   UpdateDayCode,
@@ -29,6 +31,16 @@ export class ScrapeContentsReqQueryDto {
   @IsEnum(Platforms)
   @IsNotEmpty()
   readonly platform: PlatformType;
+
+  @ApiProperty({
+    type: String,
+    description: '(카카오 한정)콘텐츠 원작 타입',
+    enum: OriginalType,
+    required: false,
+  })
+  @IsEnum(OriginalType)
+  @IsOptional()
+  readonly originalType: OriginalTypeCode;
 
   @ApiProperty({
     type: String,
