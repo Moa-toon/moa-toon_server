@@ -47,6 +47,12 @@ export const Contents = {
 } as const;
 export type ContentType = typeof Contents[keyof typeof Contents];
 
+export const OriginalType = {
+  webtoon: 'webtoon',
+  novel: 'novel',
+} as const;
+export type OriginalTypeCode = typeof OriginalType[keyof typeof OriginalType];
+
 export type WebtoonSimpleInfo = {
   id: number;
   type: number;
