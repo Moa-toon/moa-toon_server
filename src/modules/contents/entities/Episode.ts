@@ -1,8 +1,9 @@
 import { WebtoonEpisodeInfo } from 'src/common/types/contents';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, Unique } from 'typeorm';
 import { Content } from './Content';
 
 @Entity('episode')
+@Unique('unique_content_episode_constraint', ['ContentIdx', 'order'])
 export class Episode {
   @Column('int', {
     primary: true,

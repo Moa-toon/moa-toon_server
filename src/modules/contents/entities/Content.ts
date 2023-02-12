@@ -1,4 +1,4 @@
-import { Webtoon } from 'src/common/types/contents';
+import { Platforms, Webtoon } from 'src/common/types/contents';
 import { getUniqueIdxByPlatform } from 'src/common/utils/getUniqueIdxByPlatform';
 import {
   Column,
@@ -17,7 +17,7 @@ import { Episode } from './Episode';
 import { Platform } from './Platform';
 
 @Entity('content')
-@Unique(['uuid'])
+@Unique('unique_content_episode_constraint', ['uuid'])
 export class Content {
   @PrimaryGeneratedColumn({ type: 'int', name: 'idx', comment: '인덱스' })
   idx: number;
@@ -165,8 +165,12 @@ export class Content {
     contentEntity.thumbnailPath = content.thumbnailPath;
     contentEntity.ageLimit = content.ageLimit;
     contentEntity.startedAt =
-      content.episodes.length > 0
-        ? new Date(`20${content.episodes[0].createDate}`)
+      platform.name === Platforms.naver
+        ? content.episodes.length > 0
+          ? new Date(`20${content.episodes[0].createDate}`)
+          : new Date(Date.now())
+        : platform.name === Platforms.kakao
+        ? new Date(content.startedAt)
         : new Date(Date.now());
     contentEntity.Platform = platform;
     return contentEntity;
