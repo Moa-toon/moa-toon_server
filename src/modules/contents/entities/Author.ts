@@ -1,7 +1,14 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Unique,
+} from 'typeorm';
 import { ContentAuthor } from './ContentAuthor';
 
 @Entity('author')
+@Unique('unique_author_constraint', ['type', 'name'])
 export class Author {
   @PrimaryGeneratedColumn({ type: 'int', name: 'idx', comment: '인덱스' })
   idx: number;

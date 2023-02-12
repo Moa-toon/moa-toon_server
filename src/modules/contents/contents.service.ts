@@ -7,14 +7,17 @@ import {
   PlatformType,
   UpdateDayCode,
   UpdateDays,
+  UpdateWeekDaysKor,
   Webtoon,
 } from 'src/common/types/contents';
+import { WebtoonAuthor } from 'src/common/types/kakao-content';
 import { generateRandomAvgRating } from 'src/common/utils/generateRandomAvgRating';
 import { getAgeLimitKor } from 'src/common/utils/getAgeLimitKor';
 import { getAuthorTypeKor } from 'src/common/utils/getAuthorTypeKor';
 import { getContentType } from 'src/common/utils/getContentType';
 import { getUniqueIdxByPlatform } from 'src/common/utils/getUniqueIdxByPlatform';
-import { DataSource, Repository } from 'typeorm';
+import { getUpdateDayKor } from 'src/common/utils/getUpdateDayKor';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import {
   GetContentsReqQueryDto,
   SearchContentsReqQueryDto,
@@ -102,11 +105,14 @@ export class ContentsService {
     return genres;
   }
 
-  getAuthors(webtoons: Array<Webtoon>): Set<string> {
-    const authors = new Set<string>();
+  getAuthors(webtoons: Array<Webtoon>): Array<WebtoonAuthor> {
+    const authors = new Array<WebtoonAuthor>();
     for (const webtoon of webtoons) {
       for (const author of webtoon.authors) {
-        if (author !== '' && !authors.has(author)) authors.add(author);
+        const isNameExist = authors.find(
+          (authorSaved) => authorSaved.name == author.name,
+        );
+        if (author.name !== '' && !isNameExist) authors.push(author);
       }
     }
     return authors;
@@ -185,12 +191,12 @@ export class ContentsService {
     }
   }
 
-  async saveAuthors(authors: Set<string>) {
+  async saveAuthors(authors: Array<WebtoonAuthor>) {
     try {
-      for (const authorName of authors) {
-        const authorSelected = await this.findAuthorByName(authorName);
+      for (const author of authors) {
+        const authorSelected = await this.findAuthorByName(author.name);
         if (authorSelected) continue;
-        await this.saveAuthor(Author.from(authorName));
+        await this.saveAuthor(Author.from(author.name, author.type));
       }
       return true;
     } catch (err) {
@@ -200,206 +206,206 @@ export class ContentsService {
   }
 
   async saveContents(contents: Array<Webtoon>): Promise<boolean> {
-    try {
-      for (const content of contents) {
-        await this.saveContent(content);
-      }
-      return true;
-    } catch (err) {
-      console.error(err);
-      throw err;
-    }
-  }
-
-  async saveContent(content: Webtoon): Promise<boolean> {
-    let contentEntity: Content;
     return this.dataSource.manager
       .transaction(async (manager) => {
-        const platformRepo = manager.withRepository(this.platformRepo);
-        const updateDayRepo = manager.withRepository(this.updateDayRepo);
-        const authorRepo = manager.withRepository(this.authorRepo);
-        const genreRepo = manager.withRepository(this.genreRepo);
-        const contentRepo = manager.withRepository(this.contentRepo);
-        const contentUpdateDayRepo = manager.withRepository(
-          this.contentUpdateDayRepo,
-        );
-        const contentGenreRepo = manager.withRepository(this.contentGenreRepo);
-        const contentAuthorRepo = manager.withRepository(
-          this.contentAuthorRepo,
-        );
-        const episodeRepo = manager.withRepository(this.episodeRepo);
-        // platform
-        let platform: Platform;
-        const platformSelected = await platformRepo.findOneBy({
-          name: content.platform,
-        });
-        if (platformSelected) platform = platformSelected;
-        else {
-          const platformSaved = await platformRepo.save(
-            Platform.from(content.platform),
-          );
-          platform = platformSaved;
+        for (const content of contents) {
+          await this.saveContent(manager, content);
         }
-        // updateDays
-        const updateDaysSelected: Array<UpdateDay> = [];
-        for (const updateDayName of content.updateDays) {
-          const updateDaySelected = await updateDayRepo.findOneBy({
-            name: updateDayName,
-          });
-          if (updateDaySelected) updateDaysSelected.push(updateDaySelected);
-          else {
-            // updateDay 정보 저장
-            const updateDaySaved = await updateDayRepo.save(
-              UpdateDay.from(updateDayName),
-            );
-            updateDaysSelected.push(updateDaySaved);
-          }
-        }
-        // authors
-        const authorsSelected: Array<Author> = [];
-        for (const author of content.authors) {
-          const authorSelected = await authorRepo.findOneBy({
-            name: author,
-          });
-          if (authorSelected) authorsSelected.push(authorSelected);
-          else {
-            // author 정보 저장
-            const authorSaved = await authorRepo.save(Author.from(author));
-            authorsSelected.push(authorSaved);
-          }
-        }
-        // genres
-        const genresSelected: Array<Genre> = [];
-        const [main, ...sub] = content.genres;
-        let mainGenre: Genre;
-        if (main !== '') {
-          const mainGenreSelected = await genreRepo.findOneBy({
-            name: main,
-          });
-          if (mainGenreSelected) mainGenre = mainGenreSelected;
-          else {
-            // mainGenre 정보 저장
-            const mainGenreSaved = await genreRepo.save(Genre.from(main));
-            mainGenre = mainGenreSaved;
-          }
-          genresSelected.push(mainGenre);
-        }
-
-        for (const genre of sub) {
-          let subGenre: Genre;
-          if (genre !== '') {
-            const subGenreSelected = await genreRepo.findOneBy({
-              name: genre,
-            });
-            if (subGenreSelected) subGenre = subGenreSelected;
-            else {
-              // subGenre 정보 저장
-              const subGenreSaved = await genreRepo.save(
-                Genre.from(genre, mainGenre.idx),
-              );
-              subGenre = subGenreSaved;
-            }
-            genresSelected.push(subGenre);
-          }
-        }
-
-        const contentSelected = await this.getContentDetailByUUID(
-          `${getUniqueIdxByPlatform(platform.name)}${content.id}`,
-        );
-
-        if (contentSelected) {
-          // contentEntity와 content 비교 후 데이터 업데이트
-          contentEntity = this.compareAndUpdate(contentSelected, content);
-        } else contentEntity = Content.from(content, platform);
-        const contentSaved = await contentRepo.createContent(contentEntity);
-        // contentSaved
-        const savedContentIdx = contentSaved.identifiers[0]['idx'];
-        // contentAuthor
-        const contentAuthors: Array<ContentAuthor> = [];
-        if (authorsSelected.length > 0) {
-          for (const author of authorsSelected) {
-            const contentAuthorSelected =
-              contentEntity.ContentAuthors?.length > 0
-                ? contentEntity.ContentAuthors.find(
-                    (contentAuthor) => contentAuthor.AuthorIdx === author.idx,
-                  )
-                : null;
-            if (!contentAuthorSelected)
-              contentAuthors.push(ContentAuthor.from(savedContentIdx, author));
-          }
-          contentAuthors.length > 0 &&
-            (await contentAuthorRepo.save(contentAuthors));
-        }
-        // contentGenre
-        const contentGenres: Array<ContentGenre> = [];
-        if (genresSelected.length > 0) {
-          for (const genre of genresSelected) {
-            const contentGenreSelected =
-              contentEntity.ContentGenres?.length > 0
-                ? contentEntity.ContentGenres.find(
-                    (contentGenre) => contentGenre.GenreIdx === genre.idx,
-                  )
-                : null;
-            if (!contentGenreSelected)
-              contentGenres.push(ContentGenre.from(savedContentIdx, genre));
-          }
-          contentGenres.length > 0 &&
-            (await contentGenreRepo.save(contentGenres));
-        }
-
-        // contentUpdateDay
-        const contentUpdateDays: Array<ContentUpdateDay> = [];
-        if (updateDaysSelected.length > 0) {
-          for (const updateDay of updateDaysSelected) {
-            const contentUpdateDaySelected =
-              contentEntity.ContentUpdateDays?.length > 0
-                ? contentEntity.ContentUpdateDays.find(
-                    (contentUpdateDay) =>
-                      contentUpdateDay.UpdateDayIdx === updateDay.idx,
-                  )
-                : null;
-            if (!contentUpdateDaySelected)
-              contentUpdateDays.push(
-                ContentUpdateDay.from(savedContentIdx, updateDay),
-              );
-          }
-          contentUpdateDays.length > 0 &&
-            (await contentUpdateDayRepo.save(contentUpdateDays));
-        }
-
-        // episodes
-        const contentEpisodes: Array<Episode> = [];
-        let order = 1;
-        if (content.episodes?.length > 0) {
-          for (const episodeInfo of content.episodes) {
-            const contentEpisodeSelected =
-              contentEntity.Episodes?.length > 0
-                ? contentEntity.Episodes.find(
-                    (episode) =>
-                      episode.title === episodeInfo.title &&
-                      episode.urlOfMobile === episodeInfo.urlOfMobile &&
-                      episode.urlOfPc === episodeInfo.urlOfPc,
-                  )
-                : null;
-            if (!contentEpisodeSelected) {
-              const contentEpisode = Episode.from(savedContentIdx, {
-                ...episodeInfo,
-                order,
-              });
-              contentEpisodes.push(contentEpisode);
-            }
-            order++;
-          }
-          contentEpisodes.length > 0 &&
-            (await episodeRepo.save(contentEpisodes));
-        }
-
         return true;
       })
-      .catch((error) => {
-        console.error(error);
-        return false;
+      .catch((err) => {
+        console.error(err);
+        throw err;
       });
+  }
+
+  async saveContent(manager: EntityManager, content: Webtoon): Promise<void> {
+    let contentEntity: Content;
+    const platformRepo = manager.withRepository(this.platformRepo);
+    const updateDayRepo = manager.withRepository(this.updateDayRepo);
+    const authorRepo = manager.withRepository(this.authorRepo);
+    const genreRepo = manager.withRepository(this.genreRepo);
+    const contentRepo = manager.withRepository(this.contentRepo);
+    const contentUpdateDayRepo = manager.withRepository(
+      this.contentUpdateDayRepo,
+    );
+    const contentGenreRepo = manager.withRepository(this.contentGenreRepo);
+    const contentAuthorRepo = manager.withRepository(this.contentAuthorRepo);
+    const episodeRepo = manager.withRepository(this.episodeRepo);
+    // platform
+    let platform: Platform;
+    const platformSelected = await platformRepo.findOneBy({
+      name: content.platform,
+    });
+    if (platformSelected) platform = platformSelected;
+    else {
+      const platformSaved = await platformRepo.save(
+        Platform.from(content.platform),
+      );
+      platform = platformSaved;
+    }
+    // updateDays
+    const updateDaysSelected: Array<UpdateDay> = [];
+    for (const updateDayName of content.updateDays) {
+      const updateDaySelected = await updateDayRepo.findOneBy({
+        name: updateDayName,
+      });
+      if (updateDaySelected) updateDaysSelected.push(updateDaySelected);
+      else {
+        // updateDay 정보 저장
+        const updateDaySaved = await updateDayRepo.save(
+          UpdateDay.from(updateDayName),
+        );
+        updateDaysSelected.push(updateDaySaved);
+      }
+    }
+    // authors
+    const authorsSelected: Array<Author> = [];
+    for (const author of content.authors) {
+      const authorSelected = await authorRepo.findOneBy({
+        name: author.name,
+        type: author.type,
+      });
+      const authorSearched = authorsSelected.find(
+        (authorSelected) =>
+          authorSelected.name === author.name &&
+          authorSelected.type === author.type,
+      );
+      if (authorSelected && !authorSearched)
+        authorsSelected.push(authorSelected);
+      else if (!authorSelected && !authorSearched) {
+        // author 정보 저장
+        const authorSaved = await authorRepo.save(
+          Author.from(author.name, author.type),
+        );
+        authorsSelected.push(authorSaved);
+      }
+    }
+    // genres
+    const genresSelected: Array<Genre> = [];
+    const [main, ...sub] = content.genres;
+    let mainGenre: Genre;
+    if (main !== '') {
+      const mainGenreSelected = await genreRepo.findOneBy({
+        name: main,
+      });
+      if (mainGenreSelected) mainGenre = mainGenreSelected;
+      else {
+        // mainGenre 정보 저장
+        const mainGenreSaved = await genreRepo.save(Genre.from(main));
+        mainGenre = mainGenreSaved;
+      }
+      genresSelected.push(mainGenre);
+    }
+
+    for (const genre of sub) {
+      let subGenre: Genre;
+      if (genre !== '') {
+        const subGenreSelected = await genreRepo.findOneBy({
+          name: genre,
+        });
+        if (subGenreSelected) subGenre = subGenreSelected;
+        else {
+          // subGenre 정보 저장
+          const subGenreSaved = await genreRepo.save(
+            Genre.from(genre, mainGenre.idx),
+          );
+          subGenre = subGenreSaved;
+        }
+        genresSelected.push(subGenre);
+      }
+    }
+
+    const contentSelected = await this.getContentDetailByUUID(
+      `${getUniqueIdxByPlatform(platform.name)}${content.id}`,
+    );
+
+    if (contentSelected) {
+      // contentEntity와 content 비교 후 데이터 업데이트
+      contentEntity = this.compareAndUpdate(contentSelected, content);
+    } else contentEntity = Content.from(content, platform);
+    const contentSaved = await contentRepo.createContent(contentEntity);
+    // contentSaved
+    const savedContentIdx = contentSaved.identifiers[0]['idx'];
+    // contentAuthor
+    const contentAuthors: Array<ContentAuthor> = [];
+    if (authorsSelected.length > 0) {
+      for (const author of authorsSelected) {
+        const contentAuthorSelected =
+          contentEntity.ContentAuthors?.length > 0
+            ? contentEntity.ContentAuthors.find(
+                (contentAuthor) => contentAuthor.AuthorIdx === author.idx,
+              )
+            : null;
+        if (!contentAuthorSelected)
+          contentAuthors.push(ContentAuthor.from(savedContentIdx, author));
+
+        console.log('--------');
+      }
+      contentAuthors.length > 0 &&
+        (await contentAuthorRepo.save(contentAuthors));
+    }
+    // contentGenre
+    const contentGenres: Array<ContentGenre> = [];
+    if (genresSelected.length > 0) {
+      for (const genre of genresSelected) {
+        const contentGenreSelected =
+          contentEntity.ContentGenres?.length > 0
+            ? contentEntity.ContentGenres.find(
+                (contentGenre) => contentGenre.GenreIdx === genre.idx,
+              )
+            : null;
+        if (!contentGenreSelected)
+          contentGenres.push(ContentGenre.from(savedContentIdx, genre));
+      }
+      contentGenres.length > 0 && (await contentGenreRepo.save(contentGenres));
+    }
+
+    // contentUpdateDay
+    const contentUpdateDays: Array<ContentUpdateDay> = [];
+    if (updateDaysSelected.length > 0) {
+      for (const updateDay of updateDaysSelected) {
+        const contentUpdateDaySelected =
+          contentEntity.ContentUpdateDays?.length > 0
+            ? contentEntity.ContentUpdateDays.find(
+                (contentUpdateDay) =>
+                  contentUpdateDay.UpdateDayIdx === updateDay.idx,
+              )
+            : null;
+        if (!contentUpdateDaySelected)
+          contentUpdateDays.push(
+            ContentUpdateDay.from(savedContentIdx, updateDay),
+          );
+      }
+      contentUpdateDays.length > 0 &&
+        (await contentUpdateDayRepo.save(contentUpdateDays));
+    }
+
+    // episodes
+    const contentEpisodes: Array<Episode> = [];
+    let order = 1;
+    if (content.episodes?.length > 0) {
+      for (const episodeInfo of content.episodes) {
+        const contentEpisodeSelected =
+          contentEntity.Episodes?.length > 0
+            ? contentEntity.Episodes.find(
+                (episode) =>
+                  episode.title === episodeInfo.title &&
+                  episode.urlOfMobile === episodeInfo.urlOfMobile &&
+                  episode.urlOfPc === episodeInfo.urlOfPc,
+              )
+            : null;
+        if (!contentEpisodeSelected) {
+          const contentEpisode = Episode.from(savedContentIdx, {
+            ...episodeInfo,
+            order,
+          });
+          contentEpisodes.push(contentEpisode);
+        }
+        order++;
+      }
+      contentEpisodes.length > 0 && (await episodeRepo.save(contentEpisodes));
+    }
   }
 
   async getContents(
@@ -465,9 +471,9 @@ export class ContentsService {
   async getContentDetailById(contentId: string): Promise<ContentDetail> {
     const content = await this.contentRepo.findContentDetailByUUID(contentId);
     if (!content) return null;
-
     const result = {
       idx: parseInt(content.uuid),
+      platform: content.Platform.name,
       genre: {
         main: content.ContentGenres.find(
           (contentGenre) => contentGenre.Genre.parentIdx === 0,
@@ -476,6 +482,9 @@ export class ContentsService {
           (contentGenre) => contentGenre.Genre.parentIdx === 1,
         ).map((contentGenre) => contentGenre.Genre.name),
       },
+      updateDays: content.ContentUpdateDays.map((item) =>
+        getUpdateDayKor(item.UpdateDay.name),
+      ),
       title: content.title,
       description: content.description,
       ageLimitKor: getAgeLimitKor(content.ageLimit),

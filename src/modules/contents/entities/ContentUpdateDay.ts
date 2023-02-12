@@ -1,8 +1,9 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, Unique } from 'typeorm';
 import { Content } from './Content';
 import { UpdateDay } from './UpdateDay';
 
 @Entity('contentUpdateDay')
+@Unique('unique_content_update_day_constraint', ['ContentIdx', 'UpdateDayIdx'])
 export class ContentUpdateDay {
   @Column('int', { primary: true, name: 'contentIdx' })
   ContentIdx: number;

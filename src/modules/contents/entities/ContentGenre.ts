@@ -1,8 +1,9 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, Unique } from 'typeorm';
 import { Content } from './Content';
 import { Genre } from './Genre';
 
 @Entity('contentGenre')
+@Unique('unique_content_genre_constraint', ['ContentIdx', 'GenreIdx'])
 export class ContentGenre {
   @Column('int', { primary: true, name: 'genreIdx' })
   GenreIdx: number;
