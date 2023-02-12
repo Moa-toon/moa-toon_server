@@ -158,49 +158,45 @@ export class ContentRepository extends Repository<Content> {
   }
 
   async findContentDetailByUUID(uuid: string): Promise<Content> {
-    return this.findOne({
-      select: {
-        idx: true,
-        uuid: true,
-        title: true,
-        summary: true,
-        description: true,
-        thumbnailPath: true,
-        urlOfPc: true,
-        urlOfMobile: true,
-        ageLimit: true,
-        isUpdated: true,
-        isNew: true,
-        isAdult: true,
-        ContentUpdateDays: true,
-        ContentAuthors: true,
-        ContentGenres: true,
-        Episodes: {
-          order: true,
-          title: true,
-          urlOfPc: true,
-          urlOfMobile: true,
-          thumbnailUrl: true,
-          isFree: true,
-          createdAt: true,
-        },
-      },
-      relations: [
-        'ContentUpdateDays',
-        'ContentUpdateDays.UpdateDay',
-        'ContentAuthors',
-        'ContentAuthors.Author',
-        'ContentGenres',
-        'ContentGenres.Genre',
-        'Episodes',
-      ],
-      where: { uuid },
-      order: {
-        Episodes: {
-          order: 'DESC',
-        },
-      },
-    });
+    return this.createQueryBuilder('content')
+      .select([
+        'content.idx',
+        'content.uuid',
+        'content.title',
+        'content.summary',
+        'content.description',
+        'content.thumbnailPath',
+        'content.urlOfPc',
+        'content.urlOfMobile',
+        'content.ageLimit',
+        'content.isUpdated',
+        'content.isNew',
+        'content.isAdult',
+        'platform.name',
+        'updateDay.name',
+        'author.type',
+        'author.name',
+        'genre.parentIdx',
+        'genre.name',
+        'episode.order',
+        'episode.title',
+        'episode.urlOfPc',
+        'episode.urlOfMobile',
+        'episode.thumbnailUrl',
+        'episode.isFree',
+        'episode.createdAt',
+      ])
+      .leftJoinAndSelect('content.Platform', 'platform')
+      .leftJoinAndSelect('content.ContentUpdateDays', 'contentUpdateDay')
+      .leftJoinAndSelect('contentUpdateDay.UpdateDay', 'updateDay')
+      .leftJoinAndSelect('content.ContentAuthors', 'contentAuthor')
+      .leftJoinAndSelect('contentAuthor.Author', 'author')
+      .leftJoinAndSelect('content.ContentGenres', 'contentGenre')
+      .leftJoinAndSelect('contentGenre.Genre', 'genre')
+      .leftJoinAndSelect('content.Episodes', 'episode')
+      .where('content.uuid = :uuid', { uuid })
+      .orderBy('episode.order', 'DESC')
+      .getOne();
   }
 
   async findContentIds() {

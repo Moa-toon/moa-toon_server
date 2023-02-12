@@ -1,3 +1,15 @@
+import { WebtoonAuthor } from './kakao-content';
+
+export type UpdateDayKor =
+  | '월'
+  | '화'
+  | '수'
+  | '목'
+  | '금'
+  | '토'
+  | '일'
+  | '데일리'
+  | '완결';
 export const UpdateDays = {
   monday: 'mon',
   tuesday: 'tue',
@@ -10,6 +22,17 @@ export const UpdateDays = {
   finished: 'finished',
 } as const;
 export type UpdateDayCode = typeof UpdateDays[keyof typeof UpdateDays];
+
+export const UpdateWeekDaysKor = {
+  월: UpdateDays.monday,
+  화: UpdateDays.tuesday,
+  수: UpdateDays.wednesday,
+  목: UpdateDays.thursday,
+  금: UpdateDays.friday,
+  토: UpdateDays.saturday,
+  일: UpdateDays.sunday,
+} as const;
+export type UpdateWeekDaysKorKey = keyof typeof UpdateWeekDaysKor;
 
 export const Platforms = {
   naver: 'naver',
@@ -25,10 +48,14 @@ export const Contents = {
 export type ContentType = typeof Contents[keyof typeof Contents];
 
 export type WebtoonSimpleInfo = {
-  id: string;
+  id: number;
   type: number;
+  ageLimit?: number;
   title: string;
-  authors: Array<string>;
+  authors: Array<WebtoonAuthor>; // 이 부분 변경 필요 { name: string, type: string }
+  summary?: string;
+  description?: string;
+  tags?: Array<string>;
   urlOfPc: string;
   urlOfMobile: string;
   thumbnailPath: string;
@@ -40,6 +67,7 @@ export type WebtoonSimpleInfo = {
     isPaused: boolean;
     isUpdated: boolean;
   };
+  startedAt?: string;
 };
 
 export type WebtoonEpisodeInfo = {
@@ -53,10 +81,10 @@ export type WebtoonEpisodeInfo = {
 };
 
 export type WebtoonAdditionalInfo = {
-  ageLimit: number;
-  urlOfMobile: string;
-  summary: string;
-  description: string;
+  contentId: number;
+  ageLimit?: number;
+  summary?: string;
+  description?: string;
   genres: Array<string>;
   episodes: Array<WebtoonEpisodeInfo>;
 };

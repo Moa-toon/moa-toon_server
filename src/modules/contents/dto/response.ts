@@ -4,6 +4,7 @@ import {
   ContentType,
   Platforms,
   PlatformType,
+  UpdateDayKor,
 } from 'src/common/types/contents';
 
 abstract class Content {
@@ -196,9 +197,21 @@ export abstract class ContentDetail {
   idx: number;
 
   @ApiProperty({
+    type: String,
+    enum: Platforms,
+    description: '플랫폼 타입',
+  })
+  platform: PlatformType;
+
+  @ApiProperty({
     type: Genre,
   })
   genre: Genre;
+
+  @ApiProperty({
+    type: Array<UpdateDayKor>,
+  })
+  updateDays: Array<UpdateDayKor>;
 
   @ApiProperty({
     type: String,
