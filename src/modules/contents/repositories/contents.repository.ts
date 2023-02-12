@@ -1,4 +1,8 @@
-import { PlatformType } from 'src/common/types/contents';
+import {
+  ContentType,
+  PlatformType,
+  UpdateDayCode,
+} from 'src/common/types/contents';
 import { getContentType } from 'src/common/utils/getContentType';
 import { CustomRepository } from 'src/modules/db/typeorm-ex.decorator';
 import { FindOptionsWhere, InsertResult, Like, Repository } from 'typeorm';
@@ -7,6 +11,8 @@ import { SortOptions, SortOptionType } from '../dto/request';
 import { Content } from '../entities/Content';
 
 interface SearchContentsOption {
+  type?: ContentType;
+  updateDay?: UpdateDayCode;
   genres?: string;
   tags?: string;
   platform?: PlatformType;
@@ -47,7 +53,6 @@ export class ContentRepository extends Repository<Content> {
   }
 
   async findContentsWithCount(option: FindContentsOption) {
-    console.log(option);
     const qb = this.createQueryBuilder('content')
       .leftJoinAndSelect('content.Platform', 'platform')
       .leftJoinAndSelect('content.ContentUpdateDays', 'contentUpdateDays')
@@ -212,6 +217,18 @@ export class ContentRepository extends Repository<Content> {
       .leftJoinAndSelect('content.Platform', 'platform')
       .leftJoinAndSelect('content.ContentUpdateDays', 'contentUpdateDays')
       .leftJoinAndSelect('contentUpdateDays.UpdateDay', 'updateDay');
+
+    if (option.type) {
+      qb.andWhere('type = :type', { type: option.type });
+    }
+    if (option.platform) {
+      qb.andWhere('platform.name = :platformName', {
+        platformName: option.platform,
+      });
+    }
+    if (option.updateDay) {
+      qb.andWhere('updateDay.name = :name', { name: option.updateDay });
+    }
 
     if (option.keyword) {
       qb.andWhere(`content.title like '%' :title '%'`, {
