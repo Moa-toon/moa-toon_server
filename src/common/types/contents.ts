@@ -5,7 +5,7 @@ export const WebtoonAuthorType = {
   ORIGINAL_STORY: 3,
   PUBLISHER: 4,
 } as const;
-type WebtoonAuthorTypeCode =
+export type WebtoonAuthorTypeCode =
   typeof WebtoonAuthorType[keyof typeof WebtoonAuthorType];
 
 export type WebtoonAuthor = {
