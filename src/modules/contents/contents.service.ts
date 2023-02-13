@@ -118,6 +118,17 @@ export class ContentsService {
     return authors;
   }
 
+  getTags(webtoons: Array<Webtoon>): Set<string> {
+    const tags = new Set<string>();
+    for (const webtoon of webtoons) {
+      for (const tag of webtoon.tags) {
+        const isTagExist = tags.has(tag);
+        if (tag !== '' && !isTagExist) tags.add(tag);
+      }
+    }
+    return tags;
+  }
+
   async initContentsTbl() {
     return this.dataSource.manager
       .transaction(async (manager) => {
@@ -337,8 +348,6 @@ export class ContentsService {
             : null;
         if (!contentAuthorSelected)
           contentAuthors.push(ContentAuthor.from(savedContentIdx, author));
-
-        console.log('--------');
       }
       contentAuthors.length > 0 &&
         (await contentAuthorRepo.save(contentAuthors));

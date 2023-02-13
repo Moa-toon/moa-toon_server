@@ -4,7 +4,6 @@ import { setRes } from 'src/common/utils/setRes';
 import { ContentsService } from 'src/modules/contents/contents.service';
 import { ScrapeContentService } from 'src/modules/scrape-content/scrape-content.service';
 import { ScrapeContentsReqQueryDto } from './dto/request';
-import { writeFileSync } from 'fs';
 
 @Controller('admin')
 export class AdminController {
@@ -31,6 +30,8 @@ export class AdminController {
       const genres = this.contentsService.getGenres(contents);
       // Set<string>
       const authors = this.contentsService.getAuthors(contents);
+      // Set<string>
+      const tags = this.contentsService.getTags(contents);
       console.log('genre 저장');
       // genre 저장
       await this.contentsService.saveGenres(genres);
