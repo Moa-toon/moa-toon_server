@@ -440,7 +440,7 @@ export class ScrapeContentService {
       const summary = content.catchphraseTwoLines;
       const description = content.synopsis;
       const authors = content.authors;
-      const tags = content.seoKeywords;
+      const tags = content.seoKeywords.map((seoKeyword) => seoKeyword.slice(1));
       const thumbnailPath = `${content.featuredCharacterImageA}.webp`;
       const platform = Platforms.kakao;
       const startedAt = content.serialStartDateTime;
