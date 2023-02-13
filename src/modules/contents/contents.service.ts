@@ -30,6 +30,7 @@ import { Author } from './entities/Author';
 import { Content } from './entities/Content';
 import { ContentAuthor } from './entities/ContentAuthor';
 import { ContentGenre } from './entities/ContentGenre';
+import { ContentTag } from './entities/ContentTag';
 import { ContentUpdateDay } from './entities/ContentUpdateDay';
 import { Episode } from './entities/Episode';
 import { Genre } from './entities/Genre';
@@ -39,6 +40,7 @@ import { UpdateDay } from './entities/UpdateDay';
 import { AuthorRepository } from './repositories/author.repository';
 import { ContentAuthorRepository } from './repositories/content-author.repository';
 import { ContentGenreRepository } from './repositories/content-genre.repository';
+import { ContentTagRepoitory } from './repositories/content-tag.repository';
 import { ContentUpdateDayRepository } from './repositories/content-update-day.repository';
 import { ContentRepository } from './repositories/contents.repository';
 import { EpisodeRepository } from './repositories/episode.repository';
@@ -72,6 +74,7 @@ export class ContentsService {
     private readonly contentUpdateDayRepo: ContentUpdateDayRepository,
     private readonly episodeRepo: EpisodeRepository,
     private readonly tagRepo: TagRepository,
+    private readonly contentTagRepo: ContentTagRepoitory,
     private dataSource: DataSource,
   ) {}
 
@@ -262,6 +265,7 @@ export class ContentsService {
     const contentAuthorRepo = manager.withRepository(this.contentAuthorRepo);
     const episodeRepo = manager.withRepository(this.episodeRepo);
     const tagRepo = manager.withRepository(this.tagRepo);
+    const contentTagRepo = manager.withRepository(this.contentTagRepo);
 
     // platform
     let platform: Platform;
@@ -445,6 +449,22 @@ export class ContentsService {
         order++;
       }
       contentEpisodes.length > 0 && (await episodeRepo.save(contentEpisodes));
+    }
+
+    // contentTags
+    const contentTags: Array<ContentTag> = [];
+    if (tagsSelected.length > 0) {
+      for (const tag of tagsSelected) {
+        const contentTagSelected =
+          contentEntity.ContentTags?.length > 0
+            ? contentEntity.ContentTags.find(
+                (contentTag) => contentTag.TagIdx === tag.idx,
+              )
+            : null;
+        if (!contentTagSelected)
+          contentTags.push(ContentTag.from(savedContentIdx, tag));
+      }
+      contentTags.length > 0 && (await contentTagRepo.save(contentTags));
     }
   }
 
