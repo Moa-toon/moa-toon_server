@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import {
   Contents,
   GenreInfo,
@@ -31,19 +30,23 @@ import { Author } from './entities/Author';
 import { Content } from './entities/Content';
 import { ContentAuthor } from './entities/ContentAuthor';
 import { ContentGenre } from './entities/ContentGenre';
+import { ContentTag } from './entities/ContentTag';
 import { ContentUpdateDay } from './entities/ContentUpdateDay';
 import { Episode } from './entities/Episode';
 import { Genre } from './entities/Genre';
 import { Platform } from './entities/Platform';
+import { Tag } from './entities/Tag';
 import { UpdateDay } from './entities/UpdateDay';
 import { AuthorRepository } from './repositories/author.repository';
 import { ContentAuthorRepository } from './repositories/content-author.repository';
 import { ContentGenreRepository } from './repositories/content-genre.repository';
+import { ContentTagRepoitory } from './repositories/content-tag.repository';
 import { ContentUpdateDayRepository } from './repositories/content-update-day.repository';
 import { ContentRepository } from './repositories/contents.repository';
 import { EpisodeRepository } from './repositories/episode.repository';
 import { GenreRepository } from './repositories/genre.repository';
 import { PlatformRepository } from './repositories/platform.repository';
+import { TagRepository } from './repositories/tag.repository';
 import { UpdateDayRepository } from './repositories/update-day.repository';
 
 @Injectable()
@@ -70,6 +73,8 @@ export class ContentsService {
     private readonly contentGenreRepo: ContentGenreRepository,
     private readonly contentUpdateDayRepo: ContentUpdateDayRepository,
     private readonly episodeRepo: EpisodeRepository,
+    private readonly tagRepo: TagRepository,
+    private readonly contentTagRepo: ContentTagRepoitory,
     private dataSource: DataSource,
   ) {}
 
@@ -116,6 +121,17 @@ export class ContentsService {
       }
     }
     return authors;
+  }
+
+  getTags(webtoons: Array<Webtoon>): Set<string> {
+    const tags = new Set<string>();
+    for (const webtoon of webtoons) {
+      for (const tag of webtoon.tags) {
+        const isTagExist = tags.has(tag);
+        if (tag !== '' && !isTagExist) tags.add(tag);
+      }
+    }
+    return tags;
   }
 
   async initContentsTbl() {
@@ -207,6 +223,20 @@ export class ContentsService {
     }
   }
 
+  async saveTags(tags: Set<string>) {
+    try {
+      for (const tagName of tags) {
+        const tagSelected = await this.tagRepo.findOneByName(tagName);
+        if (tagSelected) continue;
+        await this.tagRepo.save(Tag.from(tagName));
+      }
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  }
+
   async saveContents(contents: Array<Webtoon>): Promise<boolean> {
     return this.dataSource.manager
       .transaction(async (manager) => {
@@ -234,6 +264,9 @@ export class ContentsService {
     const contentGenreRepo = manager.withRepository(this.contentGenreRepo);
     const contentAuthorRepo = manager.withRepository(this.contentAuthorRepo);
     const episodeRepo = manager.withRepository(this.episodeRepo);
+    const tagRepo = manager.withRepository(this.tagRepo);
+    const contentTagRepo = manager.withRepository(this.contentTagRepo);
+
     // platform
     let platform: Platform;
     const platformSelected = await platformRepo.findOneBy({
@@ -314,6 +347,21 @@ export class ContentsService {
       }
     }
 
+    // Tag
+    const tagsSelected: Array<Tag> = [];
+    for (const tagName of content.tags) {
+      const tagSelected = await this.tagRepo.findOneByName(tagName);
+      const tagSearched = tagsSelected.find(
+        (tagSelected) => tagSelected.name === tagName,
+      );
+      if (tagSelected && !tagSearched) tagsSelected.push(tagSelected);
+      else if (!tagSelected && !tagSearched) {
+        // tag 정보 저장
+        const tagSaved = await tagRepo.save(Tag.from(tagName));
+        tagsSelected.push(tagSaved);
+      }
+    }
+
     const contentSelected = await this.getContentDetailByUUID(
       `${getUniqueIdxByPlatform(platform.name)}${content.id}`,
     );
@@ -337,8 +385,6 @@ export class ContentsService {
             : null;
         if (!contentAuthorSelected)
           contentAuthors.push(ContentAuthor.from(savedContentIdx, author));
-
-        console.log('--------');
       }
       contentAuthors.length > 0 &&
         (await contentAuthorRepo.save(contentAuthors));
@@ -403,6 +449,22 @@ export class ContentsService {
         order++;
       }
       contentEpisodes.length > 0 && (await episodeRepo.save(contentEpisodes));
+    }
+
+    // contentTags
+    const contentTags: Array<ContentTag> = [];
+    if (tagsSelected.length > 0) {
+      for (const tag of tagsSelected) {
+        const contentTagSelected =
+          contentEntity.ContentTags?.length > 0
+            ? contentEntity.ContentTags.find(
+                (contentTag) => contentTag.TagIdx === tag.idx,
+              )
+            : null;
+        if (!contentTagSelected)
+          contentTags.push(ContentTag.from(savedContentIdx, tag));
+      }
+      contentTags.length > 0 && (await contentTagRepo.save(contentTags));
     }
   }
 
