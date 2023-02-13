@@ -14,11 +14,13 @@ import { Episode } from '../contents/entities/Episode';
 import { AuthorRepository } from '../contents/repositories/author.repository';
 import { ContentAuthorRepository } from '../contents/repositories/content-author.repository';
 import { ContentGenreRepository } from '../contents/repositories/content-genre.repository';
+import { ContentTagRepoitory } from '../contents/repositories/content-tag.repository';
 import { ContentUpdateDayRepository } from '../contents/repositories/content-update-day.repository';
 import { ContentRepository } from '../contents/repositories/contents.repository';
 import { EpisodeRepository } from '../contents/repositories/episode.repository';
 import { GenreRepository } from '../contents/repositories/genre.repository';
 import { PlatformRepository } from '../contents/repositories/platform.repository';
+import { TagRepository } from '../contents/repositories/tag.repository';
 import { UpdateDayRepository } from '../contents/repositories/update-day.repository';
 import { TypeOrmExModule } from '../db/typeorm-ex.module';
 import { AdminController } from './admin.controller';
@@ -35,6 +37,8 @@ import { AdminController } from './admin.controller';
       ContentGenreRepository,
       ContentUpdateDayRepository,
       EpisodeRepository,
+      TagRepository,
+      ContentTagRepoitory,
     ]),
   ],
   controllers: [AdminController],

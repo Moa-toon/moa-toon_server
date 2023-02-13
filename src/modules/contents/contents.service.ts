@@ -535,16 +535,25 @@ export class ContentsService {
       idx: parseInt(content.uuid),
       platform: content.Platform.name,
       genre: {
-        main: content.ContentGenres.find(
-          (contentGenre) => contentGenre.Genre.parentIdx === 0,
-        ).Genre.name,
-        sub: content.ContentGenres.filter(
-          (contentGenre) => contentGenre.Genre.parentIdx === 1,
-        ).map((contentGenre) => contentGenre.Genre.name),
+        main:
+          content.ContentGenres.length > 0
+            ? content.ContentGenres.find(
+                (contentGenre) => contentGenre.Genre.parentIdx === 0,
+              ).Genre.name
+            : '',
+        sub:
+          content.ContentGenres.length > 0
+            ? content.ContentGenres.filter(
+                (contentGenre) => contentGenre.Genre.parentIdx === 1,
+              ).map((contentGenre) => contentGenre.Genre.name)
+            : [],
       },
-      updateDays: content.ContentUpdateDays.map((item) =>
-        getUpdateDayKor(item.UpdateDay.name),
-      ),
+      updateDays:
+        content.ContentUpdateDays.length > 0
+          ? content.ContentUpdateDays.map((item) =>
+              getUpdateDayKor(item.UpdateDay.name),
+            )
+          : [],
       title: content.title,
       description: content.description,
       ageLimitKor: getAgeLimitKor(content.ageLimit),
@@ -554,21 +563,27 @@ export class ContentsService {
       isNew: content.isNew,
       isUpdated: content.isUpdated,
       isAdult: content.isAdult,
-      authors: content.ContentAuthors.map((contentAuthor) => ({
-        type: getAuthorTypeKor(contentAuthor.Author.type),
-        name: contentAuthor.Author.name,
-      })),
+      authors:
+        content.ContentAuthors.length > 0
+          ? content.ContentAuthors.map((contentAuthor) => ({
+              type: getAuthorTypeKor(contentAuthor.Author.type),
+              name: contentAuthor.Author.name,
+            }))
+          : [],
       episodes: {
-        totalCount: content.Episodes.length,
-        items: content.Episodes.map((episode) => ({
-          order: episode.order,
-          title: episode.title,
-          urlOfPc: episode.urlOfPc,
-          urlOfMobile: episode.urlOfMobile,
-          thumbnailUrl: episode.thumbnailUrl,
-          isFree: episode.isFree,
-          createdAt: episode.createdAt,
-        })),
+        totalCount: content.Episodes.length > 0 ? content.Episodes.length : 0,
+        items:
+          content.Episodes.length > 0
+            ? content.Episodes.map((episode) => ({
+                order: episode.order,
+                title: episode.title,
+                urlOfPc: episode.urlOfPc,
+                urlOfMobile: episode.urlOfMobile,
+                thumbnailUrl: episode.thumbnailUrl,
+                isFree: episode.isFree,
+                createdAt: episode.createdAt,
+              }))
+            : [],
       },
     };
 
