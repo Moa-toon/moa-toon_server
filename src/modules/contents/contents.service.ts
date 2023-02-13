@@ -343,6 +343,21 @@ export class ContentsService {
       }
     }
 
+    // Tag
+    const tagsSelected: Array<Tag> = [];
+    for (const tagName of content.tags) {
+      const tagSelected = await this.tagRepo.findOneByName(tagName);
+      const tagSearched = tagsSelected.find(
+        (tagSelected) => tagSelected.name === tagName,
+      );
+      if (tagSelected && !tagSearched) tagsSelected.push(tagSelected);
+      else if (!tagSelected && !tagSearched) {
+        // tag 정보 저장
+        const tagSaved = await tagRepo.save(Tag.from(tagName));
+        tagsSelected.push(tagSaved);
+      }
+    }
+
     const contentSelected = await this.getContentDetailByUUID(
       `${getUniqueIdxByPlatform(platform.name)}${content.id}`,
     );
