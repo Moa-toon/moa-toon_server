@@ -15,6 +15,7 @@ import { UpdateDay } from './entities/UpdateDay';
 import { AuthorRepository } from './repositories/author.repository';
 import { ContentAuthorRepository } from './repositories/content-author.repository';
 import { ContentGenreRepository } from './repositories/content-genre.repository';
+import { ContentTagRepoitory } from './repositories/content-tag.repository';
 import { ContentUpdateDayRepository } from './repositories/content-update-day.repository';
 import { ContentRepository } from './repositories/contents.repository';
 import { EpisodeRepository } from './repositories/episode.repository';
@@ -36,6 +37,7 @@ import { UpdateDayRepository } from './repositories/update-day.repository';
       ContentUpdateDayRepository,
       EpisodeRepository,
       TagRepository,
+      ContentTagRepoitory,
     ]),
   ],
   controllers: [ContentsController],
