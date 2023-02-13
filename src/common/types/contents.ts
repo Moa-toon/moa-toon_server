@@ -1,4 +1,17 @@
-import { WebtoonAuthor } from './kakao-content';
+export const WebtoonAuthorType = {
+  COMMON: 0,
+  AUTHOR: 1,
+  ILLUSTRATOR: 2,
+  ORIGINAL_STORY: 3,
+  PUBLISHER: 4,
+} as const;
+export type WebtoonAuthorTypeCode =
+  typeof WebtoonAuthorType[keyof typeof WebtoonAuthorType];
+
+export type WebtoonAuthor = {
+  name: string;
+  type: WebtoonAuthorTypeCode;
+};
 
 export type UpdateDayKor =
   | '월'
@@ -47,12 +60,18 @@ export const Contents = {
 } as const;
 export type ContentType = typeof Contents[keyof typeof Contents];
 
+export const OriginalType = {
+  webtoon: 'webtoon',
+  novel: 'novel',
+} as const;
+export type OriginalTypeCode = typeof OriginalType[keyof typeof OriginalType];
+
 export type WebtoonSimpleInfo = {
   id: number;
   type: number;
   ageLimit?: number;
   title: string;
-  authors: Array<WebtoonAuthor>; // 이 부분 변경 필요 { name: string, type: string }
+  authors: Array<WebtoonAuthor>;
   summary?: string;
   description?: string;
   tags?: Array<string>;

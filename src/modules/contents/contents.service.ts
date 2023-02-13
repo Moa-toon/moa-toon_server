@@ -7,10 +7,9 @@ import {
   PlatformType,
   UpdateDayCode,
   UpdateDays,
-  UpdateWeekDaysKor,
   Webtoon,
 } from 'src/common/types/contents';
-import { WebtoonAuthor } from 'src/common/types/kakao-content';
+import { WebtoonAuthor } from 'src/common/types/contents';
 import { generateRandomAvgRating } from 'src/common/utils/generateRandomAvgRating';
 import { getAgeLimitKor } from 'src/common/utils/getAgeLimitKor';
 import { getAuthorTypeKor } from 'src/common/utils/getAuthorTypeKor';
@@ -37,7 +36,15 @@ import { Episode } from './entities/Episode';
 import { Genre } from './entities/Genre';
 import { Platform } from './entities/Platform';
 import { UpdateDay } from './entities/UpdateDay';
+import { AuthorRepository } from './repositories/author.repository';
+import { ContentAuthorRepository } from './repositories/content-author.repository';
+import { ContentGenreRepository } from './repositories/content-genre.repository';
+import { ContentUpdateDayRepository } from './repositories/content-update-day.repository';
 import { ContentRepository } from './repositories/contents.repository';
+import { EpisodeRepository } from './repositories/episode.repository';
+import { GenreRepository } from './repositories/genre.repository';
+import { PlatformRepository } from './repositories/platform.repository';
+import { UpdateDayRepository } from './repositories/update-day.repository';
 
 @Injectable()
 export class ContentsService {
@@ -54,29 +61,20 @@ export class ContentsService {
   ];
 
   constructor(
-    @InjectRepository(Platform)
-    private readonly platformRepo: Repository<Platform>,
-    @InjectRepository(UpdateDay)
-    private readonly updateDayRepo: Repository<UpdateDay>,
-    @InjectRepository(Genre)
-    private readonly genreRepo: Repository<Genre>,
-    @InjectRepository(Author)
-    private readonly authorRepo: Repository<Author>,
+    private readonly platformRepo: PlatformRepository,
+    private readonly updateDayRepo: UpdateDayRepository,
+    private readonly genreRepo: GenreRepository,
+    private readonly authorRepo: AuthorRepository,
     private readonly contentRepo: ContentRepository,
-    @InjectRepository(ContentAuthor)
-    private readonly contentAuthorRepo: Repository<ContentAuthor>,
-    @InjectRepository(ContentGenre)
-    private readonly contentGenreRepo: Repository<ContentGenre>,
-    @InjectRepository(ContentUpdateDay)
-    private readonly contentUpdateDayRepo: Repository<ContentUpdateDay>,
-    @InjectRepository(Episode)
-    private readonly episodeRepo: Repository<Episode>,
+    private readonly contentAuthorRepo: ContentAuthorRepository,
+    private readonly contentGenreRepo: ContentGenreRepository,
+    private readonly contentUpdateDayRepo: ContentUpdateDayRepository,
+    private readonly episodeRepo: EpisodeRepository,
     private dataSource: DataSource,
   ) {}
 
   getGenres(webtoons: Array<Webtoon>): Array<GenreInfo> {
     const genres = new Array<GenreInfo>();
-
     for (const webtoon of webtoons) {
       // webtoon.genres
       const [mainGenreName, ...otherGenreNames] = webtoon.genres;
@@ -110,7 +108,9 @@ export class ContentsService {
     for (const webtoon of webtoons) {
       for (const author of webtoon.authors) {
         const isNameExist = authors.find(
-          (authorSaved) => authorSaved.name == author.name,
+          (authorSaved) =>
+            authorSaved.name === author.name &&
+            authorSaved.type === author.type,
         );
         if (author.name !== '' && !isNameExist) authors.push(author);
       }
@@ -123,7 +123,6 @@ export class ContentsService {
       .transaction(async (manager) => {
         const platformRepo = manager.withRepository(this.platformRepo);
         const updateDayRepo = manager.withRepository(this.updateDayRepo);
-
         // platform 정보 테이블에 저장
         const platforms: Array<PlatformType> = [
           Platforms.naver,
@@ -131,9 +130,9 @@ export class ContentsService {
           Platforms.kakaoPage,
         ];
         for (const platformName of platforms) {
-          const platformSelected = await platformRepo.findOneBy({
-            name: platformName,
-          });
+          const platformSelected = await platformRepo.findOneByName(
+            platformName,
+          );
           if (platformSelected) continue;
           await platformRepo.save(Platform.from(platformName));
         }
@@ -170,18 +169,18 @@ export class ContentsService {
       for (const genre of genres) {
         const { main, sub } = genre;
         let mainGenreIdx;
-        const mainGenreSelected = await this.findGenreByName(main);
+        const mainGenreSelected = await this.genreRepo.findOneByName(main);
         if (mainGenreSelected) mainGenreIdx = mainGenreSelected.idx;
         else {
-          const mainGenreSaved = await this.saveGenre(Genre.from(main));
+          const mainGenreSaved = await this.genreRepo.save(Genre.from(main));
           mainGenreIdx = mainGenreSaved.idx;
         }
 
         for (const subItem of sub) {
-          const subGenreSelected = await this.findGenreByName(subItem);
+          const subGenreSelected = await this.genreRepo.findOneByName(subItem);
           if (subGenreSelected) continue;
 
-          await this.saveGenre(Genre.from(subItem, mainGenreIdx));
+          await this.genreRepo.save(Genre.from(subItem, mainGenreIdx));
         }
       }
       return true;
@@ -194,9 +193,12 @@ export class ContentsService {
   async saveAuthors(authors: Array<WebtoonAuthor>) {
     try {
       for (const author of authors) {
-        const authorSelected = await this.findAuthorByName(author.name);
+        const authorSelected = await this.authorRepo.findOneByNameAndType(
+          author.name,
+          author.type,
+        );
         if (authorSelected) continue;
-        await this.saveAuthor(Author.from(author.name, author.type));
+        await this.authorRepo.save(Author.from(author.name, author.type));
       }
       return true;
     } catch (err) {
@@ -286,9 +288,7 @@ export class ContentsService {
     const [main, ...sub] = content.genres;
     let mainGenre: Genre;
     if (main !== '') {
-      const mainGenreSelected = await genreRepo.findOneBy({
-        name: main,
-      });
+      const mainGenreSelected = await genreRepo.findOneByName(main);
       if (mainGenreSelected) mainGenre = mainGenreSelected;
       else {
         // mainGenre 정보 저장
@@ -301,9 +301,7 @@ export class ContentsService {
     for (const genre of sub) {
       let subGenre: Genre;
       if (genre !== '') {
-        const subGenreSelected = await genreRepo.findOneBy({
-          name: genre,
-        });
+        const subGenreSelected = await genreRepo.findOneByName(genre);
         if (subGenreSelected) subGenre = subGenreSelected;
         else {
           // subGenre 정보 저장
@@ -528,38 +526,6 @@ export class ContentsService {
     return ids;
   }
 
-  async findUpdateDayByName(name: UpdateDayCode): Promise<UpdateDay> {
-    return this.updateDayRepo.findOneBy({ name });
-  }
-
-  async findPlatformByName(name: PlatformType): Promise<Platform> {
-    return this.platformRepo.findOneBy({ name });
-  }
-
-  async findAuthorByName(name: string): Promise<Author> {
-    return this.authorRepo.findOneBy({ name });
-  }
-
-  async findGenreByName(name: string): Promise<Genre> {
-    return this.genreRepo.findOneBy({ name });
-  }
-
-  async saveGenre(genre: Genre): Promise<Genre> {
-    return this.genreRepo.save(genre);
-  }
-
-  async savePlatform(platform: Platform): Promise<Platform> {
-    return this.platformRepo.save(platform);
-  }
-
-  async saveUpdateDay(updateDay: UpdateDay): Promise<UpdateDay> {
-    return this.updateDayRepo.save(updateDay);
-  }
-
-  async saveAuthor(author: Author): Promise<Author> {
-    return this.authorRepo.save(author);
-  }
-
   compareAndUpdate(contentEntity: Content, contentDto: Webtoon): Content {
     // contentEntity와 content 비교
     // contentEntity: urlOfPc, urlOfMobile
@@ -572,6 +538,8 @@ export class ContentsService {
           'description',
           'ageLimit',
           'thumbnailPath',
+          'urlOfPc',
+          'urlOfMobile',
         ].includes(key)
       ) {
         if (val !== contentDto[key]) {
@@ -582,16 +550,6 @@ export class ContentsService {
         if (val !== contentDto.additional[key]) {
           console.log(`[${contentEntity.idx}] ${key} 데이터가 일치하지 않음.`);
           contentEntity[key] = contentDto.additional[key];
-        }
-      } else if (key === 'urlOfMobile') {
-        if (val !== contentDto.urlOfMobile) {
-          console.log(`[${contentEntity.idx}] ${key} 데이터가 일치하지 않음.`);
-          contentEntity[key] = contentDto.urlOfMobile;
-        }
-      } else if (key === 'urlOfPc') {
-        if (val !== contentDto.urlOfPc) {
-          console.log(`[${contentEntity.idx}] ${key} 데이터가 일치하지 않음.`);
-          contentEntity[key] = contentDto.urlOfPc;
         }
       }
     }

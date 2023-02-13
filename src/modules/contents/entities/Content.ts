@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { ContentAuthor } from './ContentAuthor';
 import { ContentGenre } from './ContentGenre';
+import { ContentTag } from './ContentTag';
 import { ContentUpdateDay } from './ContentUpdateDay';
 import { Episode } from './Episode';
 import { Platform } from './Platform';
@@ -137,6 +138,9 @@ export class Content {
 
   @OneToMany(() => ContentAuthor, (contentAuthors) => contentAuthors.Content)
   ContentAuthors: ContentAuthor[];
+
+  @OneToMany(() => ContentTag, (contentTags) => contentTags.Content)
+  ContentTags: ContentTag[];
 
   @OneToMany(
     () => ContentUpdateDay,

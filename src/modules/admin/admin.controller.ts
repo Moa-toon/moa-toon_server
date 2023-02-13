@@ -24,6 +24,7 @@ export class AdminController {
       const contents = await this.scrapeContentService.getContentsByPlatform(
         query.platform,
         query.updateDay,
+        query.originalType,
       );
 
       // Array<{ main: string; sub: Set<string> }>

@@ -12,21 +12,28 @@ import { Episode } from './entities/Episode';
 import { Genre } from './entities/Genre';
 import { Platform } from './entities/Platform';
 import { UpdateDay } from './entities/UpdateDay';
+import { AuthorRepository } from './repositories/author.repository';
+import { ContentAuthorRepository } from './repositories/content-author.repository';
+import { ContentGenreRepository } from './repositories/content-genre.repository';
+import { ContentUpdateDayRepository } from './repositories/content-update-day.repository';
 import { ContentRepository } from './repositories/contents.repository';
+import { EpisodeRepository } from './repositories/episode.repository';
+import { GenreRepository } from './repositories/genre.repository';
+import { PlatformRepository } from './repositories/platform.repository';
+import { UpdateDayRepository } from './repositories/update-day.repository';
 
 @Module({
   imports: [
-    TypeOrmExModule.forCustomRepository([ContentRepository]),
-    TypeOrmModule.forFeature([
-      Platform,
-      UpdateDay,
-      Genre,
-      Author,
-      // Content,
-      ContentAuthor,
-      ContentGenre,
-      ContentUpdateDay,
-      Episode,
+    TypeOrmExModule.forCustomRepository([
+      PlatformRepository,
+      ContentRepository,
+      UpdateDayRepository,
+      GenreRepository,
+      AuthorRepository,
+      ContentAuthorRepository,
+      ContentGenreRepository,
+      ContentUpdateDayRepository,
+      EpisodeRepository,
     ]),
   ],
   controllers: [ContentsController],
