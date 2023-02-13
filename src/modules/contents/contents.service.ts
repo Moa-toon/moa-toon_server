@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import {
   Contents,
   GenreInfo,
@@ -35,6 +34,7 @@ import { ContentUpdateDay } from './entities/ContentUpdateDay';
 import { Episode } from './entities/Episode';
 import { Genre } from './entities/Genre';
 import { Platform } from './entities/Platform';
+import { Tag } from './entities/Tag';
 import { UpdateDay } from './entities/UpdateDay';
 import { AuthorRepository } from './repositories/author.repository';
 import { ContentAuthorRepository } from './repositories/content-author.repository';
@@ -44,6 +44,7 @@ import { ContentRepository } from './repositories/contents.repository';
 import { EpisodeRepository } from './repositories/episode.repository';
 import { GenreRepository } from './repositories/genre.repository';
 import { PlatformRepository } from './repositories/platform.repository';
+import { TagRepository } from './repositories/tag.repository';
 import { UpdateDayRepository } from './repositories/update-day.repository';
 
 @Injectable()
@@ -70,6 +71,7 @@ export class ContentsService {
     private readonly contentGenreRepo: ContentGenreRepository,
     private readonly contentUpdateDayRepo: ContentUpdateDayRepository,
     private readonly episodeRepo: EpisodeRepository,
+    private readonly tagRepo: TagRepository,
     private dataSource: DataSource,
   ) {}
 
@@ -218,6 +220,20 @@ export class ContentsService {
     }
   }
 
+  async saveTags(tags: Set<string>) {
+    try {
+      for (const tagName of tags) {
+        const tagSelected = await this.tagRepo.findOneByName(tagName);
+        if (tagSelected) continue;
+        await this.tagRepo.save(Tag.from(tagName));
+      }
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  }
+
   async saveContents(contents: Array<Webtoon>): Promise<boolean> {
     return this.dataSource.manager
       .transaction(async (manager) => {
@@ -245,6 +261,8 @@ export class ContentsService {
     const contentGenreRepo = manager.withRepository(this.contentGenreRepo);
     const contentAuthorRepo = manager.withRepository(this.contentAuthorRepo);
     const episodeRepo = manager.withRepository(this.episodeRepo);
+    const tagRepo = manager.withRepository(this.tagRepo);
+
     // platform
     let platform: Platform;
     const platformSelected = await platformRepo.findOneBy({

@@ -26,20 +26,12 @@ export class AdminController {
         query.originalType,
       );
 
-      // Array<{ main: string; sub: Set<string> }>
       const genres = this.contentsService.getGenres(contents);
-      // Set<string>
       const authors = this.contentsService.getAuthors(contents);
-      // Set<string>
       const tags = this.contentsService.getTags(contents);
-      console.log('genre 저장');
-      // genre 저장
       await this.contentsService.saveGenres(genres);
-      console.log('author 저장');
-      // authors 저장
       await this.contentsService.saveAuthors(authors);
-      console.log('content 저장');
-      // contents 저장
+      await this.contentsService.saveTags(tags);
       await this.contentsService.saveContents(contents);
       return setRes(204);
     } catch (err) {
