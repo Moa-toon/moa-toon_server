@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiNoContentResponse, ApiOperation } from '@nestjs/swagger';
+import { Platforms } from 'src/common/types/contents';
 import { setRes } from 'src/common/utils/setRes';
 import { ContentsService } from 'src/modules/contents/contents.service';
 import { ScrapeContentService } from 'src/modules/scrape-content/scrape-content.service';
@@ -31,7 +32,8 @@ export class AdminController {
       const tags = this.contentsService.getTags(contents);
       await this.contentsService.saveGenres(genres);
       await this.contentsService.saveAuthors(authors);
-      await this.contentsService.saveTags(tags);
+      if (contents[0].platform !== Platforms.naver)
+        await this.contentsService.saveTags(tags);
       await this.contentsService.saveContents(contents);
       return setRes(204);
     } catch (err) {

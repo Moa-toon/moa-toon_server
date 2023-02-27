@@ -124,6 +124,8 @@ export class ContentsService {
   }
 
   getTags(webtoons: Array<Webtoon>): Set<string> {
+    if (webtoons[0].platform === Platforms.naver) return null;
+
     const tags = new Set<string>();
     for (const webtoon of webtoons) {
       for (const tag of webtoon.tags) {
@@ -349,16 +351,18 @@ export class ContentsService {
 
     // Tag
     const tagsSelected: Array<Tag> = [];
-    for (const tagName of content.tags) {
-      const tagSelected = await this.tagRepo.findOneByName(tagName);
-      const tagSearched = tagsSelected.find(
-        (tagSelected) => tagSelected.name === tagName,
-      );
-      if (tagSelected && !tagSearched) tagsSelected.push(tagSelected);
-      else if (!tagSelected && !tagSearched) {
-        // tag 정보 저장
-        const tagSaved = await tagRepo.save(Tag.from(tagName));
-        tagsSelected.push(tagSaved);
+    if (content.tags && content.tags.length > 0) {
+      for (const tagName of content.tags) {
+        const tagSelected = await this.tagRepo.findOneByName(tagName);
+        const tagSearched = tagsSelected.find(
+          (tagSelected) => tagSelected.name === tagName,
+        );
+        if (tagSelected && !tagSearched) tagsSelected.push(tagSelected);
+        else if (!tagSelected && !tagSearched) {
+          // tag 정보 저장
+          const tagSaved = await tagRepo.save(Tag.from(tagName));
+          tagsSelected.push(tagSaved);
+        }
       }
     }
 
@@ -536,10 +540,10 @@ export class ContentsService {
       platform: content.Platform.name,
       genre: {
         main:
-          content.ContentGenres.length > 0
+          content.ContentGenres?.length > 0
             ? content.ContentGenres.find(
                 (contentGenre) => contentGenre.Genre.parentIdx === 0,
-              ).Genre.name
+              )?.Genre.name
             : '',
         sub:
           content.ContentGenres.length > 0
