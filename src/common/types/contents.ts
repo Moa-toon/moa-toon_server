@@ -97,6 +97,7 @@ export type WebtoonEpisodeInfo = {
   thumbnailUrl: string;
   createDate: string;
   isFree: boolean;
+  isUpdated: boolean;
 };
 
 export type WebtoonAdditionalInfo = {
@@ -114,3 +115,8 @@ export type GenreInfo = {
 };
 
 export type Webtoon = WebtoonSimpleInfo & WebtoonAdditionalInfo;
+
+export type CookieOption = {
+  nidAuth: string;
+  nidSes: string;
+};
