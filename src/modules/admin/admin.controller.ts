@@ -25,6 +25,9 @@ export class AdminController {
         query.platform,
         query.updateDay,
         query.originalType,
+        query.nidAuth && query.nidSes
+          ? { nidAuth: query.nidAuth, nidSes: query.nidSes }
+          : null,
       );
 
       const genres = this.contentsService.getGenres(contents);

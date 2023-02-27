@@ -11,6 +11,7 @@ import {
 } from 'src/common/common.constant';
 import {
   Contents,
+  CookieOption,
   OriginalType,
   OriginalTypeCode,
   Platforms,
@@ -75,10 +76,14 @@ export class ScrapeContentService {
     platform: PlatformType,
     updateDay: UpdateDayCode,
     originalType: OriginalTypeCode,
+    cookieOption?: CookieOption,
   ) {
     if (platform === Platforms.naver) {
       console.log('네이버 웹툰');
-      return this.getNaverWebtoons(this.NAVER_WEBTOON_URL, updateDay);
+      const cookie = cookieOption
+        ? `NID_AUT=${cookieOption.nidAuth}; NID_SES=${cookieOption.nidSes};`
+        : null;
+      return this.getNaverWebtoons(this.NAVER_WEBTOON_URL, updateDay, cookie);
     } else if (platform === Platforms.kakao) {
       console.log('카카오 웹툰');
       const additionalUrl = this.getKakaoContentApiAdditionalUrl(
@@ -105,7 +110,11 @@ export class ScrapeContentService {
     return webtoons;
   }
 
-  async getNaverWebtoons(baseUrl: string, updateDay: UpdateDayCode) {
+  async getNaverWebtoons(
+    baseUrl: string,
+    updateDay: UpdateDayCode,
+    cookie?: string,
+  ) {
     if (updateDay === 'daily') {
       console.log('데일리 웹툰 데이터 수집');
       // Daily 웹툰 콘텐츠 간략 정보 스크래핑
@@ -114,7 +123,9 @@ export class ScrapeContentService {
         updateDay,
       );
       const dailyWebtoonsAdditionalData =
-        await this.scrapeNaverWebtoonsAdditionalData(dailyWebtoonsSimpleData);
+        await this.scrapeNaverWebtoonsAdditionalData(dailyWebtoonsSimpleData, {
+          cookie,
+        });
       const dailyWebtoons = this.makeWebtoonData(
         dailyWebtoonsSimpleData,
         dailyWebtoonsAdditionalData,
@@ -131,6 +142,7 @@ export class ScrapeContentService {
       const weeklyDayWebtoonsAdditionalData =
         await this.scrapeNaverWebtoonsAdditionalData(
           weeklyDayWebtoonsSimpleData,
+          { cookie },
         );
 
       const weeklyDayWebtoons = this.makeWebtoonData(
@@ -153,7 +165,9 @@ export class ScrapeContentService {
         (acc, curr) => [...acc, ...curr],
       );
       const webtoonsAdditionalData =
-        await this.scrapeNaverWebtoonsAdditionalData(webtoonsSimpleData);
+        await this.scrapeNaverWebtoonsAdditionalData(webtoonsSimpleData, {
+          cookie,
+        });
       const finishedWebtoons = this.makeWebtoonData(
         webtoonsSimpleData,
         webtoonsAdditionalData,
@@ -234,19 +248,24 @@ export class ScrapeContentService {
 
   async scrapeNaverWebtoonsAdditionalData(
     webtoons: Array<WebtoonSimpleInfo>,
+    option?: { type?: string; cookie?: string },
   ): Promise<Array<WebtoonAdditionalInfo>> {
     return Promise.all(
       webtoons.map((webtoon) =>
-        this.scrapeNaverWebtoonAdditionalData(webtoon.urlOfMobile),
+        this.scrapeNaverWebtoonAdditionalData(webtoon.urlOfMobile, option),
       ),
     );
   }
 
   async scrapeNaverWebtoonAdditionalData(
     url: string,
+    option?: {
+      type?: string;
+      cookie?: string;
+    },
   ): Promise<WebtoonAdditionalInfo> {
     // url에 대해 axios.get 요청
-    const htmlData = await this.getHtmlData(url);
+    const htmlData = await this.getHtmlData(url, option.cookie);
     const $ = this.loadHtml(htmlData);
     const contentId = extractContentId(url);
     const summary = $('.section_toon_info .info_front .summary').text().trim();
@@ -275,7 +294,10 @@ export class ScrapeContentService {
       pages.map(async (page) => {
         return (async () => {
           const episodesOfPage: Array<WebtoonEpisodeInfo> = [];
-          const htmlData = await this.getHtmlData(`${url}&page=${page}`);
+          const htmlData = await this.getHtmlData(
+            `${url}&page=${page}`,
+            option.cookie,
+          );
           const $ = this.loadHtml(htmlData);
 
           const episodeItemList = $('#ct > ul.section_episode_list li.item');
@@ -301,7 +323,7 @@ export class ScrapeContentService {
     };
   }
 
-  async getHtmlData(url: string): Promise<string> {
+  async getHtmlData(url: string, cookie?: string): Promise<string> {
     try {
       const axiosConfig = {
         port: null, // port: 80
@@ -319,6 +341,7 @@ export class ScrapeContentService {
           'user-agent':
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
           connection: 'keep-alive',
+          Cookie: cookie,
         },
       };
       const html: { data: string } = await axios.get(url, axiosConfig);
@@ -396,6 +419,9 @@ export class ScrapeContentService {
     const isFree =
       $(element).find('div.thumbnail > span > span').text().trim() !==
       '유료만화';
+    const isUpdated = !!$(element)
+      .find('div.info > strong > span.bullet.up')
+      .data();
     return {
       title,
       urlOfPc: `${this.NAVER_WEBTOON_PC_BASE_URL}${additionalUrl}`,
@@ -403,6 +429,7 @@ export class ScrapeContentService {
       thumbnailUrl,
       createDate,
       isFree,
+      isUpdated,
     };
   }
 
