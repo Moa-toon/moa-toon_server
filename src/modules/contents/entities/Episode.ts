@@ -63,6 +63,14 @@ export class Episode {
   @JoinColumn({ name: 'contentIdx', referencedColumnName: 'idx' })
   Content: Content;
 
+  private static convertCreateDate(createDate: string): Date {
+    const regexOfNaver = /^([0-2]\d|3[0-1])\.(0[1-9]|1[0-2])\.(\d{2})$/;
+    const regexOfKakaoWebtoon =
+      /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z$/;
+    if (regexOfNaver.test(createDate)) return new Date(`20${createDate}`);
+    else if (regexOfKakaoWebtoon.test(createDate)) return new Date(createDate);
+  }
+
   static from(contentIdx: number, episodeInfo: WebtoonEpisodeInfo): Episode {
     const episode = new Episode();
     episode.ContentIdx = contentIdx;
@@ -72,10 +80,10 @@ export class Episode {
     episode.urlOfMobile = episodeInfo.urlOfMobile;
     episode.thumbnailUrl = episodeInfo.thumbnailUrl;
     episode.isFree = episodeInfo.isFree;
-    episode.createdAt =
-      episodeInfo.createDate !== ''
-        ? new Date(`20${episodeInfo.createDate}`)
-        : new Date(Date.now());
+    // kakao: 2022-09-11T13:00:00Z
+    // naver: 21.06.27
+    console.log(episodeInfo.createDate);
+    episode.createdAt = this.convertCreateDate(episodeInfo.createDate);
     return episode;
   }
 }

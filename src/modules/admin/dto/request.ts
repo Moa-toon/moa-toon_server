@@ -51,6 +51,20 @@ export class ScrapeContentsReqQueryDto {
   @IsEnum(UpdateDays)
   @IsNotEmpty()
   readonly updateDay: UpdateDayCode;
+
+  @ApiProperty({
+    type: String,
+    description: '(네이버 한정) NID_AUTH',
+    required: false,
+  })
+  readonly nidAuth: string;
+
+  @ApiProperty({
+    type: String,
+    description: '(네이버 한정) NID_SES',
+    required: false,
+  })
+  readonly nidSes: string;
 }
 
 export type SortOption = {
