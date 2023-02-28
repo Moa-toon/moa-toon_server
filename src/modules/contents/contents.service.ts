@@ -100,7 +100,11 @@ export class ContentsService {
       for (const otherGenreName of otherGenreNames) {
         const genreItem = genres.find((genre) => genre.main === mainGenreName);
 
-        if (genreItem && !genreItem.sub.has(otherGenreName)) {
+        if (
+          otherGenreName !== '' &&
+          genreItem &&
+          !genreItem.sub.has(otherGenreName)
+        ) {
           genreItem.sub.add(otherGenreName);
         }
       }
@@ -538,20 +542,10 @@ export class ContentsService {
     const result = {
       idx: parseInt(content.uuid),
       platform: content.Platform.name,
-      genre: {
-        main:
-          content.ContentGenres?.length > 0
-            ? content.ContentGenres.find(
-                (contentGenre) => contentGenre.Genre.parentIdx === 0,
-              )?.Genre.name
-            : '',
-        sub:
-          content.ContentGenres.length > 0
-            ? content.ContentGenres.filter(
-                (contentGenre) => contentGenre.Genre.parentIdx === 1,
-              ).map((contentGenre) => contentGenre.Genre.name)
-            : [],
-      },
+      genre:
+        content.ContentGenres?.length > 0
+          ? content.ContentGenres.map((contentGenre) => contentGenre.Genre.name)
+          : [],
       updateDays:
         content.ContentUpdateDays.length > 0
           ? content.ContentUpdateDays.map((item) =>
@@ -574,6 +568,7 @@ export class ContentsService {
               name: contentAuthor.Author.name,
             }))
           : [],
+      avgRating: generateRandomAvgRating(0.0, 5.0, 1),
       episodes: {
         totalCount: content.Episodes.length > 0 ? content.Episodes.length : 0,
         items:

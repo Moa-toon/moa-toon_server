@@ -16,7 +16,7 @@ export class Author {
   @Column('tinyint', { name: 'type', comment: '작가 구분' })
   type: number;
 
-  @Column('varchar', { name: 'name', comment: '작가 이름', length: 30 })
+  @Column('varchar', { name: 'name', comment: '작가 이름', length: 100 })
   name: string;
 
   @OneToMany(() => ContentAuthor, (contentAuthors) => contentAuthors.Author)
