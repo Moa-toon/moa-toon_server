@@ -289,30 +289,41 @@ export class ScrapeContentService {
     const pageCount = $('#ct > div.paging_type2 > em > span').text();
 
     // 회차 정보 수집
-    const pages = Array.from({ length: parseInt(pageCount) }, (v, i) => i + 1);
-    const episodesOfAllPages = await Promise.all(
-      pages.map(async (page) => {
-        return (async () => {
-          const episodesOfPage: Array<WebtoonEpisodeInfo> = [];
-          const htmlData = await this.getHtmlData(
-            `${url}&page=${page}`,
-            option.cookie,
-          );
-          const $ = this.loadHtml(htmlData);
-
-          const episodeItemList = $('#ct > ul.section_episode_list li.item');
-          for (const episodeItem of episodeItemList) {
-            const episodeInfo = this.getWebtoonEpisode($, episodeItem);
-            episodesOfPage.push(episodeInfo);
-          }
-          return episodesOfPage;
-        })();
-      }),
+    // page가 없는 경우 예외 처리 필요
+    const pages = Array.from(
+      { length: !!pageCount ? parseInt(pageCount) + 1 : 1 },
+      (v, i) => i + 1,
     );
+
+    const episodesOfAllPages =
+      pages.length > 0
+        ? await Promise.all(
+            pages.map(async (page) => {
+              return (async () => {
+                const episodesOfPage: Array<WebtoonEpisodeInfo> = [];
+                const htmlData = await this.getHtmlData(
+                  `${url}&page=${page}`,
+                  option.cookie,
+                );
+                const $ = this.loadHtml(htmlData);
+
+                const episodeItemList = $(
+                  '#ct > ul.section_episode_list li.item',
+                );
+                for (const episodeItem of episodeItemList) {
+                  const episodeInfo = this.getWebtoonEpisode($, episodeItem);
+                  episodesOfPage.push(episodeInfo);
+                }
+                return episodesOfPage;
+              })();
+            }),
+          )
+        : [];
     const episodes = episodesOfAllPages.reduce(
       (acc, curr) => [...acc, ...curr],
       [],
     );
+
     return {
       contentId: parseInt(contentId) ?? 0,
       ageLimit,
