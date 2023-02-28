@@ -204,9 +204,9 @@ export abstract class ContentDetail {
   platform: PlatformType;
 
   @ApiProperty({
-    type: Genre,
+    type: Array<String>,
   })
-  genre: Genre;
+  genre: string[];
 
   @ApiProperty({
     type: Array<UpdateDayKor>,

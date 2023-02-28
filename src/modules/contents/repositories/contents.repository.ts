@@ -200,6 +200,7 @@ export class ContentRepository extends Repository<Content> {
       .leftJoinAndSelect('contentGenre.Genre', 'genre')
       .leftJoinAndSelect('content.Episodes', 'episode')
       .where('content.uuid = :uuid', { uuid })
+      .orderBy('genre.parentIdx', 'ASC')
       .orderBy('episode.order', 'DESC')
       .getOne();
   }
