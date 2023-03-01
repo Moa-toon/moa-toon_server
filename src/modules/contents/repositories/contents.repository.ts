@@ -76,37 +76,6 @@ export class ContentRepository extends Repository<Content> {
     if (option.take) qb.take(option.take);
     if (option.page) qb.skip(option.take * (option.page - 1));
     return qb.getManyAndCount();
-
-    // const whereOption: FindOptionsWhere<Content> = {};
-    // if (option.type) whereOption.type = option.type;
-    // if (option.platform) whereOption.Platform = { name: option.platform };
-    // if (option.updateDay)
-    //   whereOption.ContentUpdateDays = { UpdateDay: { name: option.updateDay } };
-    // return this.findAndCount({
-    //   select: {
-    //     idx: true,
-    //     title: true,
-    //     summary: true,
-    //     thumbnailPath: true,
-    //     urlOfPc: true,
-    //     urlOfMobile: true,
-    //     ageLimit: true,
-    //     isUpdated: true,
-    //     isNew: true,
-    //     isAdult: true,
-    //     Platform: {
-    //       name: true,
-    //     },
-    //   },
-    //   relations: [
-    //     'Platform',
-    //     'ContentUpdateDays',
-    //     'ContentUpdateDays.UpdateDay',
-    //   ],
-    //   where: whereOption,
-    //   take: option.take,
-    //   skip: option.take * (option.page - 1),
-    // });
   }
 
   async findContentDetailById(idx: number): Promise<Content> {
@@ -265,5 +234,19 @@ export class ContentRepository extends Repository<Content> {
       }
     }
     return qb.getManyAndCount();
+  }
+
+  async findTodayBannerContents(updateDay: UpdateDayCode) {
+    const qb = this.createQueryBuilder('content')
+      .leftJoinAndSelect('content.Platform', 'platform')
+      .leftJoinAndSelect('content.ContentUpdateDays', 'contentUpdateDays')
+      .leftJoinAndSelect('contentUpdateDays.UpdateDay', 'updateDay')
+      .leftJoinAndSelect('content.ContentGenres', 'contentGenres')
+      .leftJoinAndSelect('contentGenres.Genre', 'genre');
+
+    qb.where('updateDay.name = :name', { name: updateDay });
+    qb.andWhere('content.isNew = :isNew', { isNew: true });
+    qb.addOrderBy('content.platformIdx', 'ASC');
+    return qb.getMany();
   }
 }
