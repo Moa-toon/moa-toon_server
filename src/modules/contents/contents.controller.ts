@@ -80,6 +80,14 @@ export class ContentsController {
     return setRes(200, options);
   }
 
+  @Get('/banner-contents')
+  async getBannerContents() {
+    const contents = await this.contentsService.getBannerContents();
+    if (contents.length === 0) return setRes(404);
+    if (contents === null) return setRes(500);
+    return setRes(200, contents);
+  }
+
   @Get('/:contentId')
   @ApiOperation({ summary: '컨텐츠 상세정보 조회 API', description: '' })
   @ApiOkResponse({ description: '성공', type: ContentResponse })

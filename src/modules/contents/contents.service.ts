@@ -7,12 +7,14 @@ import {
   UpdateDayCode,
   UpdateDays,
   Webtoon,
+  WebtoonAdditionalInfo,
 } from 'src/common/types/contents';
 import { WebtoonAuthor } from 'src/common/types/contents';
 import { generateRandomAvgRating } from 'src/common/utils/generateRandomAvgRating';
 import { getAgeLimitKor } from 'src/common/utils/getAgeLimitKor';
 import { getAuthorTypeKor } from 'src/common/utils/getAuthorTypeKor';
 import { getContentType } from 'src/common/utils/getContentType';
+import { getCurrentDay } from 'src/common/utils/getCurrentDay';
 import { getUniqueIdxByPlatform } from 'src/common/utils/getUniqueIdxByPlatform';
 import { getUpdateDayKor } from 'src/common/utils/getUpdateDayKor';
 import { DataSource, EntityManager, Repository } from 'typeorm';
@@ -78,7 +80,9 @@ export class ContentsService {
     private dataSource: DataSource,
   ) {}
 
-  getGenres(webtoons: Array<Webtoon>): Array<GenreInfo> {
+  getGenres(
+    webtoons: Array<Webtoon> | Array<WebtoonAdditionalInfo>,
+  ): Array<GenreInfo> {
     const genres = new Array<GenreInfo>();
     for (const webtoon of webtoons) {
       // webtoon.genres
@@ -703,5 +707,56 @@ export class ContentsService {
       console.error(err);
       return null;
     }
+  }
+
+  async getBannerContents() {
+    try {
+      const today = getCurrentDay() as UpdateDayCode;
+      const contents = await this.contentRepo.findTodayBannerContents(today);
+      const bannerContents = this.getEveryPlatformContentsBy(contents, 2);
+      const items =
+        bannerContents.length > 0
+          ? bannerContents.map((content) => ({
+              idx: parseInt(content.uuid),
+              platform: content.Platform.name,
+              type: content.type === 0 ? 'webtoon' : 'webNovel',
+              genres:
+                content.ContentGenres?.length > 0
+                  ? content.ContentGenres.map(
+                      (contentGenre) => contentGenre.Genre.name,
+                    )
+                  : [],
+              title: content.title,
+              summary: content.summary ?? '',
+              ageLimit: content.ageLimit,
+              thumbnailUrl: content.thumbnailPath,
+              isNew: content.isNew,
+              isAdult: content.isAdult,
+            }))
+          : [];
+      return items;
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  }
+  getEveryPlatformContentsBy(contents: Content[], limit: number): Content[] {
+    if (contents.length === 0) return [];
+
+    const filteredContents = [];
+    let naverCount = 0,
+      kakaoCount = 0;
+    for (const content of contents) {
+      if (content.Platform.name === 'kakao') {
+        if (kakaoCount === limit) continue;
+        filteredContents.push(content);
+        kakaoCount++;
+      } else if (content.Platform.name === 'naver') {
+        if (naverCount === limit) continue;
+        filteredContents.push(content);
+        naverCount++;
+      }
+    }
+    return filteredContents;
   }
 }
