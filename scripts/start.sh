@@ -1,1 +1,1 @@
-docker run -d --rm --name moatoon_server -p 8080:8080 -v /home/ubuntu/moatoon_server:/var/app moatoon_server:latest
+docker run -d -p 8080:8080 --rm -v /home/ubuntu/moatoon_server:/var/app --name moatoon_server moatoon_server:latest
