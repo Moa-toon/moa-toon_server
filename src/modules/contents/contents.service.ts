@@ -53,18 +53,6 @@ import { UpdateDayRepository } from './repositories/update-day.repository';
 
 @Injectable()
 export class ContentsService {
-  private propertiesToUpdate = [
-    'title',
-    'description',
-    'ageLimit',
-    'isNew',
-    'isAdult',
-    'isPaused',
-    'isUpdated',
-    'thumbnailPath',
-    'summary',
-  ];
-
   constructor(
     private readonly platformRepo: PlatformRepository,
     private readonly updateDayRepo: UpdateDayRepository,
@@ -480,6 +468,101 @@ export class ContentsService {
     }
   }
 
+  async saveContentDetail(
+    contentSelected: Content,
+    content: WebtoonAdditionalInfo,
+  ): Promise<void> {
+    return this.dataSource.manager.transaction(async (manager) => {
+      let contentEntity: Content;
+      const genreRepo = manager.withRepository(this.genreRepo);
+      const contentRepo = manager.withRepository(this.contentRepo);
+      const contentGenreRepo = manager.withRepository(this.contentGenreRepo);
+      const episodeRepo = manager.withRepository(this.episodeRepo);
+
+      // genres
+      const genresSelected: Array<Genre> = [];
+      const [main, ...sub] = content.genres;
+      let mainGenre: Genre;
+      if (main !== '') {
+        const mainGenreSelected = await genreRepo.findOneByName(main);
+        if (mainGenreSelected) mainGenre = mainGenreSelected;
+        else {
+          // mainGenre 정보 저장
+          const mainGenreSaved = await genreRepo.save(Genre.from(main));
+          mainGenre = mainGenreSaved;
+        }
+        genresSelected.push(mainGenre);
+      }
+
+      for (const genre of sub) {
+        let subGenre: Genre;
+        if (genre !== '') {
+          const subGenreSelected = await genreRepo.findOneByName(genre);
+          if (subGenreSelected) subGenre = subGenreSelected;
+          else {
+            // subGenre 정보 저장
+            const subGenreSaved = await genreRepo.save(
+              Genre.from(genre, mainGenre.idx),
+            );
+            subGenre = subGenreSaved;
+          }
+          genresSelected.push(subGenre);
+        }
+      }
+
+      if (contentSelected) {
+        // contentEntity와 content 비교 후 데이터 업데이트
+        contentEntity = this.compareDetailAndUpdate(contentSelected, content);
+      }
+      const contentSaved = await contentRepo.createContent(contentEntity);
+      // contentSaved
+      const savedContentIdx = contentSaved.identifiers[0]['idx'];
+
+      // contentGenre
+      const contentGenres: Array<ContentGenre> = [];
+      if (genresSelected.length > 0) {
+        for (const genre of genresSelected) {
+          const contentGenreSelected =
+            contentEntity.ContentGenres?.length > 0
+              ? contentEntity.ContentGenres.find(
+                  (contentGenre) => contentGenre.GenreIdx === genre.idx,
+                )
+              : null;
+          if (!contentGenreSelected)
+            contentGenres.push(ContentGenre.from(savedContentIdx, genre));
+        }
+        contentGenres.length > 0 &&
+          (await contentGenreRepo.save(contentGenres));
+      }
+
+      // episodes
+      const contentEpisodes: Array<Episode> = [];
+      let order = 1;
+      if (content.episodes?.length > 0) {
+        for (const episodeInfo of content.episodes) {
+          const contentEpisodeSelected =
+            contentEntity.Episodes?.length > 0
+              ? contentEntity.Episodes.find(
+                  (episode) =>
+                    episode.title === episodeInfo.title &&
+                    episode.urlOfMobile === episodeInfo.urlOfMobile &&
+                    episode.urlOfPc === episodeInfo.urlOfPc,
+                )
+              : null;
+          if (!contentEpisodeSelected) {
+            const contentEpisode = Episode.from(savedContentIdx, {
+              ...episodeInfo,
+              order,
+            });
+            contentEpisodes.push(contentEpisode);
+          }
+          order++;
+        }
+        contentEpisodes.length > 0 && (await episodeRepo.save(contentEpisodes));
+      }
+    });
+  }
+
   async getContents(
     query: GetContentsReqQueryDto,
   ): Promise<ContentPaginationData> {
@@ -507,6 +590,7 @@ export class ContentsService {
               urlOfPc: content.urlOfPc,
               urlOfMobile: content.urlOfMobile,
               thumbnailUrl: content.thumbnailPath,
+              thumbnailBackgroundUrl: content.thumbnailBackgroundPath,
               isNew: content.isNew,
               isAdult: content.isAdult,
               isUpdated: content.isUpdated,
@@ -548,7 +632,11 @@ export class ContentsService {
       platform: content.Platform.name,
       genre:
         content.ContentGenres?.length > 0
-          ? content.ContentGenres.map((contentGenre) => contentGenre.Genre.name)
+          ? content.ContentGenres.reduce((genres, contentGenre) => {
+              const splittedGenres = contentGenre.Genre.name.split(' ');
+              genres.push(...splittedGenres);
+              return genres;
+            }, [])
           : [],
       updateDays:
         content.ContentUpdateDays.length > 0
@@ -562,6 +650,7 @@ export class ContentsService {
       urlOfPc: content.urlOfPc,
       urlOfMobile: content.urlOfMobile,
       thumbnailUrl: content.thumbnailPath,
+      thumbnailBackgroundUrl: content.thumbnailBackgroundPath,
       isNew: content.isNew,
       isUpdated: content.isUpdated,
       isAdult: content.isAdult,
@@ -618,6 +707,7 @@ export class ContentsService {
           'description',
           'ageLimit',
           'thumbnailPath',
+          'thumbnailBackgroundPath',
           'urlOfPc',
           'urlOfMobile',
         ].includes(key)
@@ -630,6 +720,34 @@ export class ContentsService {
         if (val !== contentDto.additional[key]) {
           console.log(`[${contentEntity.idx}] ${key} 데이터가 일치하지 않음.`);
           contentEntity[key] = contentDto.additional[key];
+        }
+      }
+    }
+    return contentEntity;
+  }
+
+  compareDetailAndUpdate(
+    contentEntity: Content,
+    contentDto: WebtoonAdditionalInfo,
+  ): Content {
+    // contentEntity와 content 비교
+    // contentEntity: urlOfPc, urlOfMobile
+    for (const [key, val] of Object.entries(contentEntity)) {
+      // title, summary, description, ageLimit, thumbnailPath
+      if (
+        [
+          'title',
+          'summary',
+          'description',
+          'ageLimit',
+          'thumbnailPath',
+          'urlOfPc',
+          'urlOfMobile',
+        ].includes(key)
+      ) {
+        if (val !== contentDto[key]) {
+          console.log(`[${contentEntity.idx}] ${key} 데이터가 일치하지 않음.`);
+          contentEntity[key] = contentDto[key];
         }
       }
     }
@@ -654,6 +772,7 @@ export class ContentsService {
               urlOfPc: content.urlOfPc,
               urlOfMobile: content.urlOfMobile,
               thumbnailUrl: content.thumbnailPath,
+              thumbnailBackgroundUrl: content.thumbnailBackgroundPath,
               isNew: content.isNew,
               isAdult: content.isAdult,
               isUpdated: content.isUpdated,
@@ -730,6 +849,7 @@ export class ContentsService {
               summary: content.summary ?? '',
               ageLimit: content.ageLimit,
               thumbnailUrl: content.thumbnailPath,
+              thumbnailBackgroundUrl: content.thumbnailBackgroundPath,
               isNew: content.isNew,
               isAdult: content.isAdult,
             }))

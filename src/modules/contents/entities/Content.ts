@@ -42,7 +42,7 @@ export class Content {
   @Column('varchar', {
     name: 'title',
     comment: '제목',
-    length: 100,
+    length: 200,
     default: '',
   })
   title: string;
@@ -84,6 +84,14 @@ export class Content {
     nullable: true,
   })
   thumbnailPath: string;
+
+  @Column('varchar', {
+    name: 'thumbnailBackgroundPath',
+    comment: '썸네일 배경 이미지 경로',
+    length: 255,
+    nullable: true,
+  })
+  thumbnailBackgroundPath: string;
 
   @Column('boolean', {
     name: 'isNew',
@@ -167,6 +175,7 @@ export class Content {
     contentEntity.isPaused = content.additional.isPaused;
     contentEntity.isUpdated = content.additional.isUpdated;
     contentEntity.thumbnailPath = content.thumbnailPath;
+    contentEntity.thumbnailBackgroundPath = content.thumbnailBackgroundPath;
     contentEntity.ageLimit = content.ageLimit;
     contentEntity.startedAt =
       platform.name === Platforms.naver

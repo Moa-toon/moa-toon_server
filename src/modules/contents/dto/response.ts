@@ -251,6 +251,13 @@ export abstract class ContentDetail {
   thumbnailUrl: string;
 
   @ApiProperty({
+    type: String,
+    description: '썸네일 url',
+    nullable: true,
+  })
+  thumbnailBackgroundUrl?: string;
+
+  @ApiProperty({
     type: Boolean,
     description: '신작 여부',
   })

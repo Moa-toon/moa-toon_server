@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiNoContentResponse, ApiOperation } from '@nestjs/swagger';
 import { Platforms } from 'src/common/types/contents';
 import { setRes } from 'src/common/utils/setRes';

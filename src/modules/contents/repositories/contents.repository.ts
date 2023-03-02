@@ -38,6 +38,7 @@ export class ContentRepository extends Repository<Content> {
           'urlOfPc',
           'urlOfMobile',
           'thumbnailPath',
+          'thumbnailBackgroundPath',
         ],
         ['uuid'],
       )
@@ -86,6 +87,7 @@ export class ContentRepository extends Repository<Content> {
         summary: true,
         description: true,
         thumbnailPath: true,
+        thumbnailBackgroundPath: true,
         urlOfPc: true,
         urlOfMobile: true,
         ageLimit: true,
@@ -140,6 +142,7 @@ export class ContentRepository extends Repository<Content> {
         'content.summary',
         'content.description',
         'content.thumbnailPath',
+        'content.thumbnailBackgroundPath',
         'content.urlOfPc',
         'content.urlOfMobile',
         'content.ageLimit',
@@ -169,8 +172,9 @@ export class ContentRepository extends Repository<Content> {
       .leftJoinAndSelect('contentGenre.Genre', 'genre')
       .leftJoinAndSelect('content.Episodes', 'episode')
       .where('content.uuid = :uuid', { uuid })
-      .orderBy('genre.parentIdx', 'ASC')
-      .orderBy('episode.order', 'DESC')
+      .orderBy('updateDay.idx', 'ASC')
+      .addOrderBy('genre.parentIdx', 'ASC')
+      .addOrderBy('episode.order', 'DESC')
       .getOne();
   }
 
