@@ -53,18 +53,6 @@ import { UpdateDayRepository } from './repositories/update-day.repository';
 
 @Injectable()
 export class ContentsService {
-  private propertiesToUpdate = [
-    'title',
-    'description',
-    'ageLimit',
-    'isNew',
-    'isAdult',
-    'isPaused',
-    'isUpdated',
-    'thumbnailPath',
-    'summary',
-  ];
-
   constructor(
     private readonly platformRepo: PlatformRepository,
     private readonly updateDayRepo: UpdateDayRepository,
@@ -602,6 +590,7 @@ export class ContentsService {
               urlOfPc: content.urlOfPc,
               urlOfMobile: content.urlOfMobile,
               thumbnailUrl: content.thumbnailPath,
+              thumbnailBackgroundUrl: content.thumbnailBackgroundPath,
               isNew: content.isNew,
               isAdult: content.isAdult,
               isUpdated: content.isUpdated,
@@ -661,6 +650,7 @@ export class ContentsService {
       urlOfPc: content.urlOfPc,
       urlOfMobile: content.urlOfMobile,
       thumbnailUrl: content.thumbnailPath,
+      thumbnailBackgroundUrl: content.thumbnailBackgroundPath,
       isNew: content.isNew,
       isUpdated: content.isUpdated,
       isAdult: content.isAdult,
@@ -782,6 +772,7 @@ export class ContentsService {
               urlOfPc: content.urlOfPc,
               urlOfMobile: content.urlOfMobile,
               thumbnailUrl: content.thumbnailPath,
+              thumbnailBackgroundUrl: content.thumbnailBackgroundPath,
               isNew: content.isNew,
               isAdult: content.isAdult,
               isUpdated: content.isUpdated,
@@ -841,7 +832,6 @@ export class ContentsService {
     try {
       const today = getCurrentDay() as UpdateDayCode;
       const contents = await this.contentRepo.findTodayBannerContents(today);
-      console.log(today, contents);
       const bannerContents = this.getEveryPlatformContentsBy(contents, 2);
       const items =
         bannerContents.length > 0
@@ -859,6 +849,7 @@ export class ContentsService {
               summary: content.summary ?? '',
               ageLimit: content.ageLimit,
               thumbnailUrl: content.thumbnailPath,
+              thumbnailBackgroundUrl: content.thumbnailBackgroundPath,
               isNew: content.isNew,
               isAdult: content.isAdult,
             }))

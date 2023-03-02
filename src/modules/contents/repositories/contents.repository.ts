@@ -87,6 +87,7 @@ export class ContentRepository extends Repository<Content> {
         summary: true,
         description: true,
         thumbnailPath: true,
+        thumbnailBackgroundPath: true,
         urlOfPc: true,
         urlOfMobile: true,
         ageLimit: true,
