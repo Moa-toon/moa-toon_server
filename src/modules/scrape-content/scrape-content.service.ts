@@ -107,6 +107,7 @@ export class ScrapeContentService {
       kakaoWebtoonAxiosConfig,
     );
     const webtoons = this.makeWebtoonData(simpleData, additionalData);
+    console.log(webtoons[1]['thumbnailBackgroundPath']);
     return webtoons;
   }
 
@@ -480,6 +481,7 @@ export class ScrapeContentService {
       const authors = content.authors;
       const tags = content.seoKeywords.map((seoKeyword) => seoKeyword.slice(1));
       const thumbnailPath = `${content.featuredCharacterImageA}.webp`;
+      const thumbnailBackgroundPath = `${content.backgroundImage}.webp`;
       const platform = Platforms.kakao;
       const startedAt = content.serialStartDateTime;
       const isNew = additional.new;
@@ -502,6 +504,7 @@ export class ScrapeContentService {
         urlOfPc: url,
         urlOfMobile: url,
         thumbnailPath,
+        thumbnailBackgroundPath,
         platform,
         updateDays: [updateDay],
         additional: {

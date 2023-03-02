@@ -78,6 +78,7 @@ export type WebtoonSimpleInfo = {
   urlOfPc: string;
   urlOfMobile: string;
   thumbnailPath: string;
+  thumbnailBackgroundPath?: string;
   platform: PlatformType;
   updateDays: Array<UpdateDayCode>;
   additional: {

@@ -38,6 +38,7 @@ export class ContentRepository extends Repository<Content> {
           'urlOfPc',
           'urlOfMobile',
           'thumbnailPath',
+          'thumbnailBackgroundPath',
         ],
         ['uuid'],
       )
@@ -140,6 +141,7 @@ export class ContentRepository extends Repository<Content> {
         'content.summary',
         'content.description',
         'content.thumbnailPath',
+        'content.thumbnailBackgroundPath',
         'content.urlOfPc',
         'content.urlOfMobile',
         'content.ageLimit',

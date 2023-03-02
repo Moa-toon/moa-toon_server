@@ -717,6 +717,7 @@ export class ContentsService {
           'description',
           'ageLimit',
           'thumbnailPath',
+          'thumbnailBackgroundPath',
           'urlOfPc',
           'urlOfMobile',
         ].includes(key)
