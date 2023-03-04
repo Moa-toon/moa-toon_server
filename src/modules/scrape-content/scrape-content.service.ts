@@ -1,10 +1,11 @@
+import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import axios from 'axios';
 import { load } from 'cheerio';
+import axios from 'axios';
 import {
   kakaoWebtoonAxiosConfig,
   KAKAO_WEBTOON_API_BASE_URL,
@@ -33,6 +34,7 @@ import { extractContentId } from 'src/common/utils/extractContentId';
 import { getAgeLimit } from 'src/common/utils/getAgeLimit';
 import { getContentType } from 'src/common/utils/getContentType';
 import { SortOption } from '../admin/dto/request';
+import { lastValueFrom, map } from 'rxjs';
 
 @Injectable()
 export class ScrapeContentService {
@@ -41,10 +43,12 @@ export class ScrapeContentService {
   private readonly NAVER_WEBTOON_URL = 'https://m.comic.naver.com/webtoon';
   private readonly weekdays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
+  constructor(private readonly httpService: HttpService) {}
+
   private getApiBaseUrlByPlatform(platform: PlatformType): string {
     switch (platform) {
       case Platforms.naver:
-        return 'https://m.comic.naver.com';
+        return 'https://m.comic.naver.com/webtoon';
       case Platforms.kakao:
         return 'https://gateway-kw.kakao.com';
       default:
@@ -115,6 +119,21 @@ export class ScrapeContentService {
   getKakaoWebtoonEpisodeUrl = (contentId: number, sortOption: SortOption) => {
     return `${KAKAO_WEBTOON_EPISODE_API_BASE_URL}/${contentId}/episodes?offset=${sortOption.offset}&limit=${sortOption.limit}`;
   };
+
+  async collectContentData(
+    platform: PlatformType,
+    updateDay: UpdateDayCode,
+    originalType: OriginalTypeCode,
+  ) {
+    const getContentListReqUrl = this.createGetContentListReqUrl(
+      platform,
+      updateDay,
+      originalType,
+    );
+    const html = await this.getResponseFrom(getContentListReqUrl);
+    console.log(html);
+    return html;
+  }
 
   async getContentsByPlatform(
     platform: PlatformType,
@@ -379,6 +398,13 @@ export class ScrapeContentService {
     };
   }
 
+  async getResponseFrom(url: string, axiosConfig?: any): Promise<any> {
+    const request = this.httpService
+      .get(url, axiosConfig)
+      .pipe(map((response) => response.data));
+    return lastValueFrom(request);
+  }
+
   async getHtmlData(url: string, cookie?: string): Promise<string> {
     try {
       const axiosConfig = {
@@ -400,7 +426,10 @@ export class ScrapeContentService {
           Cookie: cookie,
         },
       };
-      const html: { data: string } = await axios.get(url, axiosConfig);
+      const html: { data: string } = await this.getResponseFrom(
+        url,
+        axiosConfig,
+      );
       return html.data;
     } catch (err) {
       console.error(err);
