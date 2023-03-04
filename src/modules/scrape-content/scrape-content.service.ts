@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import axios from 'axios';
 import { load } from 'cheerio';
 import {
@@ -35,15 +39,55 @@ export class ScrapeContentService {
   private readonly NAVER_WEBTOON_BASE_URL = 'https://m.comic.naver.com';
   private readonly NAVER_WEBTOON_PC_BASE_URL = 'https://comic.naver.com';
   private readonly NAVER_WEBTOON_URL = 'https://m.comic.naver.com/webtoon';
-  private readonly weeklyDays = [
-    'mon',
-    'tue',
-    'wed',
-    'thu',
-    'fri',
-    'sat',
-    'sun',
-  ];
+  private readonly weekdays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+  private getApiBaseUrlByPlatform(platform: PlatformType): string {
+    switch (platform) {
+      case Platforms.naver:
+        return 'https://m.comic.naver.com';
+      case Platforms.kakao:
+        return 'https://gateway-kw.kakao.com';
+      default:
+        throw new BadRequestException('invalid platform');
+    }
+  }
+
+  private isWeekdayContent(updateDay: UpdateDayCode): boolean {
+    return this.weekdays.includes(updateDay);
+  }
+
+  private getApiPageUrl(
+    platform: PlatformType,
+    updateDay: UpdateDayCode,
+    originalType: OriginalTypeCode,
+  ): string {
+    if (platform === Platforms.naver) {
+      if (this.isWeekdayContent(updateDay)) return `weekday?week=${updateDay}`;
+      else if (updateDay === UpdateDays.daily) return `weekday?week=dailyPlus`;
+      else if (updateDay === UpdateDays.finished) return `finish`;
+    } else if (platform === Platforms.kakao) {
+      if (originalType === OriginalType.webtoon) {
+        if (this.isWeekdayContent(updateDay)) return `pages/general-weekdays`;
+        else if (updateDay === UpdateDays.finished)
+          return `sections?placement=channel_completed`;
+      } else if (originalType === OriginalType.novel) {
+        if (this.isWeekdayContent(updateDay))
+          return `sections?placement=novel_completed`;
+        else if (updateDay === UpdateDays.finished)
+          return `pages/novel-weekdays`;
+      }
+    }
+  }
+
+  createGetContentListReqUrl(
+    platform: PlatformType,
+    updateDay: UpdateDayCode,
+    originalType: OriginalTypeCode,
+  ): string {
+    const apiBaseUrl = this.getApiBaseUrlByPlatform(platform);
+    const apiPageUrl = this.getApiPageUrl(platform, updateDay, originalType);
+    return `${apiBaseUrl}/${apiPageUrl}`;
+  }
 
   getKakaoContentApiAdditionalUrl(
     originalType: OriginalTypeCode,
@@ -132,7 +176,7 @@ export class ScrapeContentService {
         dailyWebtoonsAdditionalData,
       );
       return dailyWebtoons;
-    } else if (this.weeklyDays.includes(updateDay)) {
+    } else if (this.weekdays.includes(updateDay)) {
       console.log('요일별 웹툰 데이터 수집');
       const weeklyDayWebtoonsSimpleData =
         await this.scrapeNaverWebtoonSimpleData(
