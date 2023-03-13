@@ -830,9 +830,7 @@ export class ContentsService {
 
   async getBannerContents() {
     try {
-      const today = getCurrentDay() as UpdateDayCode;
-      const contents = await this.contentRepo.findTodayBannerContents(today);
-      const bannerContents = this.getEveryPlatformContentsBy(contents, 2);
+      const bannerContents = await this.contentRepo.findBannerContents();
       const items =
         bannerContents.length > 0
           ? bannerContents.map((content) => ({
@@ -859,24 +857,5 @@ export class ContentsService {
       console.error(err);
       return null;
     }
-  }
-  getEveryPlatformContentsBy(contents: Content[], limit: number): Content[] {
-    if (contents.length === 0) return [];
-
-    const filteredContents = [];
-    let naverCount = 0,
-      kakaoCount = 0;
-    for (const content of contents) {
-      if (content.Platform.name === 'kakao') {
-        if (kakaoCount === limit) continue;
-        filteredContents.push(content);
-        kakaoCount++;
-      } else if (content.Platform.name === 'naver') {
-        if (naverCount === limit) continue;
-        filteredContents.push(content);
-        naverCount++;
-      }
-    }
-    return filteredContents;
   }
 }
