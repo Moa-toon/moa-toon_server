@@ -1,11 +1,11 @@
+import { BANNER_CONTENT_COUNT } from 'src/common/common.constant';
 import {
   ContentType,
   PlatformType,
   UpdateDayCode,
 } from 'src/common/types/contents';
-import { getContentType } from 'src/common/utils/getContentType';
 import { CustomRepository } from 'src/modules/db/typeorm-ex.decorator';
-import { FindOptionsWhere, InsertResult, Like, Repository } from 'typeorm';
+import { InsertResult, Repository } from 'typeorm';
 import { FindContentsOption } from '../dto/db';
 import { SortOptions, SortOptionType } from '../dto/request';
 import { Content } from '../entities/Content';
@@ -240,17 +240,20 @@ export class ContentRepository extends Repository<Content> {
     return qb.getManyAndCount();
   }
 
-  async findTodayBannerContents(updateDay: UpdateDayCode) {
+  async findBannerContents() {
     const qb = this.createQueryBuilder('content')
       .leftJoinAndSelect('content.Platform', 'platform')
       .leftJoinAndSelect('content.ContentUpdateDays', 'contentUpdateDays')
       .leftJoinAndSelect('contentUpdateDays.UpdateDay', 'updateDay')
       .leftJoinAndSelect('content.ContentGenres', 'contentGenres')
       .leftJoinAndSelect('contentGenres.Genre', 'genre');
-
-    qb.where('updateDay.name = :name', { name: updateDay });
+    // 카카오 한정
+    qb.where('content.platformIdx = :platformIdx', { platformIdx: 2 });
+    // 신작만
     qb.andWhere('content.isNew = :isNew', { isNew: true });
-    qb.addOrderBy('content.platformIdx', 'ASC');
+    // 최신순
+    qb.addOrderBy('content.startedAt', 'DESC');
+    qb.limit(BANNER_CONTENT_COUNT);
     return qb.getMany();
   }
 }
