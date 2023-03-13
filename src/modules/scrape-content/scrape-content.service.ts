@@ -1,6 +1,11 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import axios from 'axios';
+import { HttpService } from '@nestjs/axios';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { load } from 'cheerio';
+import axios from 'axios';
 import {
   kakaoWebtoonAxiosConfig,
   KAKAO_WEBTOON_API_BASE_URL,
@@ -29,21 +34,96 @@ import { extractContentId } from 'src/common/utils/extractContentId';
 import { getAgeLimit } from 'src/common/utils/getAgeLimit';
 import { getContentType } from 'src/common/utils/getContentType';
 import { SortOption } from '../admin/dto/request';
+import { lastValueFrom, map } from 'rxjs';
 
 @Injectable()
 export class ScrapeContentService {
   private readonly NAVER_WEBTOON_BASE_URL = 'https://m.comic.naver.com';
   private readonly NAVER_WEBTOON_PC_BASE_URL = 'https://comic.naver.com';
   private readonly NAVER_WEBTOON_URL = 'https://m.comic.naver.com/webtoon';
-  private readonly weeklyDays = [
-    'mon',
-    'tue',
-    'wed',
-    'thu',
-    'fri',
-    'sat',
-    'sun',
-  ];
+  private readonly weekdays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+  constructor(private readonly httpService: HttpService) {}
+
+  private getApiBaseUrlByPlatform(platform: PlatformType): string {
+    switch (platform) {
+      case Platforms.naver:
+        return 'https://m.comic.naver.com/webtoon';
+      case Platforms.kakao:
+        return 'https://gateway-kw.kakao.com/section/v4';
+      default:
+        throw new BadRequestException('invalid platform');
+    }
+  }
+  private isWeekdayContent(updateDay: UpdateDayCode): boolean {
+    return this.weekdays.includes(updateDay);
+  }
+  private getApiPageUrl(
+    platform: PlatformType,
+    updateDay: UpdateDayCode,
+    originalType: OriginalTypeCode,
+  ): string {
+    if (platform === Platforms.naver) {
+      if (this.isWeekdayContent(updateDay)) return `weekday?week=${updateDay}`;
+      else if (updateDay === UpdateDays.daily) return `weekday?week=dailyPlus`;
+      else if (updateDay === UpdateDays.finished) return `finish`;
+    } else if (platform === Platforms.kakao) {
+      if (originalType === OriginalType.webtoon) {
+        if (this.isWeekdayContent(updateDay)) return `pages/general-weekdays`;
+        else if (updateDay === UpdateDays.finished)
+          return `sections?placement=channel_completed`;
+      } else if (originalType === OriginalType.novel) {
+        if (this.isWeekdayContent(updateDay))
+          return `sections?placement=novel_completed`;
+        else if (updateDay === UpdateDays.finished)
+          return `pages/novel-weekdays`;
+      }
+    }
+  }
+
+  createGetContentListReqUrl(
+    platform: PlatformType,
+    updateDay: UpdateDayCode,
+    originalType: OriginalTypeCode,
+  ): string {
+    const apiBaseUrl = this.getApiBaseUrlByPlatform(platform);
+    const apiPageUrl = this.getApiPageUrl(platform, updateDay, originalType);
+    return `${apiBaseUrl}/${apiPageUrl}`;
+  }
+  async collectContentData(
+    platform: PlatformType,
+    updateDay: UpdateDayCode,
+    originalType: OriginalTypeCode,
+  ) {
+    const contentSimpleData = await this.collectContentSimpleDataByPlatform(
+      platform,
+      updateDay,
+      originalType,
+    );
+    return contentSimpleData;
+  }
+
+  async collectContentSimpleDataByPlatform(
+    platform: PlatformType,
+    updateDay: UpdateDayCode,
+    originalType: OriginalTypeCode,
+  ) {
+    const getContentListReqUrl = this.createGetContentListReqUrl(
+      platform,
+      updateDay,
+      originalType,
+    );
+    if (platform === Platforms.naver)
+      return this.collectNaverWebtoonSimpleData(
+        getContentListReqUrl,
+        updateDay,
+      );
+    else if (platform === Platforms.kakao)
+      return this.collectKakaoWebtoonSimpleData(
+        getContentListReqUrl,
+        updateDay,
+      );
+  }
 
   getKakaoContentApiAdditionalUrl(
     originalType: OriginalTypeCode,
@@ -72,113 +152,113 @@ export class ScrapeContentService {
     return `${KAKAO_WEBTOON_EPISODE_API_BASE_URL}/${contentId}/episodes?offset=${sortOption.offset}&limit=${sortOption.limit}`;
   };
 
-  async getContentsByPlatform(
-    platform: PlatformType,
-    updateDay: UpdateDayCode,
-    originalType: OriginalTypeCode,
-    cookieOption?: CookieOption,
-  ) {
-    if (platform === Platforms.naver) {
-      console.log('네이버 웹툰');
-      const cookie = cookieOption
-        ? `NID_AUT=${cookieOption.nidAuth}; NID_SES=${cookieOption.nidSes};`
-        : null;
-      return this.getNaverWebtoons(this.NAVER_WEBTOON_URL, updateDay, cookie);
-    } else if (platform === Platforms.kakao) {
-      console.log('카카오 웹툰');
-      const additionalUrl = this.getKakaoContentApiAdditionalUrl(
-        originalType,
-        updateDay,
-      );
-      return this.getKakaoWebtoons(
-        `${KAKAO_WEBTOON_API_BASE_URL}/${additionalUrl}`,
-        updateDay,
-      );
-    }
-  }
+  // async getContentsByPlatform(
+  //   platform: PlatformType,
+  //   updateDay: UpdateDayCode,
+  //   originalType: OriginalTypeCode,
+  //   cookieOption?: CookieOption,
+  // ) {
+  //   if (platform === Platforms.naver) {
+  //     console.log('네이버 웹툰');
+  //     const cookie = cookieOption
+  //       ? `NID_AUT=${cookieOption.nidAuth}; NID_SES=${cookieOption.nidSes};`
+  //       : null;
+  //     return this.getNaverWebtoons(this.NAVER_WEBTOON_URL, updateDay, cookie);
+  //   } else if (platform === Platforms.kakao) {
+  //     console.log('카카오 웹툰');
+  //     const additionalUrl = this.getKakaoContentApiAdditionalUrl(
+  //       originalType,
+  //       updateDay,
+  //     );
+  //     return this.getKakaoWebtoons(
+  //       `${KAKAO_WEBTOON_API_BASE_URL}/${additionalUrl}`,
+  //       updateDay,
+  //     );
+  //   }
+  // }
 
-  async getKakaoWebtoons(baseUrl: string, updateDay: UpdateDayCode) {
-    const simpleData = await this.scrapeKakaoWebtoonSimpleData(
-      baseUrl,
-      updateDay,
-    );
-    const additionalData = await this.scrapeKakaoWebtoonsAdditionalData(
-      simpleData,
-      kakaoWebtoonAxiosConfig,
-    );
-    const webtoons = this.makeWebtoonData(simpleData, additionalData);
-    console.log(webtoons[1]['thumbnailBackgroundPath']);
-    return webtoons;
-  }
+  // async getKakaoWebtoons(baseUrl: string, updateDay: UpdateDayCode) {
+  //   const simpleData = await this.collectKakaoWebtoonSimpleData(
+  //     baseUrl,
+  //     updateDay,
+  //   );
+  //   const additionalData = await this.scrapeKakaoWebtoonsAdditionalData(
+  //     simpleData,
+  //     kakaoWebtoonAxiosConfig,
+  //   );
+  //   const webtoons = this.makeWebtoonData(simpleData, additionalData);
+  //   console.log(webtoons[1]['thumbnailBackgroundPath']);
+  //   return webtoons;
+  // }
 
-  async getNaverWebtoons(
-    baseUrl: string,
-    updateDay: UpdateDayCode,
-    cookie?: string,
-  ) {
-    if (updateDay === 'daily') {
-      console.log('데일리 웹툰 데이터 수집');
-      // Daily 웹툰 콘텐츠 간략 정보 스크래핑
-      const dailyWebtoonsSimpleData = await this.scrapeNaverWebtoonSimpleData(
-        `${baseUrl}/weekday?week=dailyPlus`,
-        updateDay,
-      );
-      const dailyWebtoonsAdditionalData =
-        await this.scrapeNaverWebtoonsAdditionalData(dailyWebtoonsSimpleData, {
-          cookie,
-        });
-      const dailyWebtoons = this.makeWebtoonData(
-        dailyWebtoonsSimpleData,
-        dailyWebtoonsAdditionalData,
-      );
-      return dailyWebtoons;
-    } else if (this.weeklyDays.includes(updateDay)) {
-      console.log('요일별 웹툰 데이터 수집');
-      const weeklyDayWebtoonsSimpleData =
-        await this.scrapeNaverWebtoonSimpleData(
-          `${baseUrl}/weekday?week=${updateDay}`,
-          updateDay,
-        );
+  // async getNaverWebtoons(
+  //   baseUrl: string,
+  //   updateDay: UpdateDayCode,
+  //   cookie?: string,
+  // ) {
+  //   if (updateDay === 'daily') {
+  //     console.log('데일리 웹툰 데이터 수집');
+  //     // Daily 웹툰 콘텐츠 간략 정보 스크래핑
+  //     const dailyWebtoonsSimpleData = await this.collectNaverWebtoonSimpleData(
+  //       `${baseUrl}/weekday?week=dailyPlus`,
+  //       updateDay,
+  //     );
+  //     const dailyWebtoonsAdditionalData =
+  //       await this.scrapeNaverWebtoonsAdditionalData(dailyWebtoonsSimpleData, {
+  //         cookie,
+  //       });
+  //     const dailyWebtoons = this.makeWebtoonData(
+  //       dailyWebtoonsSimpleData,
+  //       dailyWebtoonsAdditionalData,
+  //     );
+  //     return dailyWebtoons;
+  //   } else if (this.weekdays.includes(updateDay)) {
+  //     console.log('요일별 웹툰 데이터 수집');
+  //     const weeklyDayWebtoonsSimpleData =
+  //       await this.collectNaverWebtoonSimpleData(
+  //         `${baseUrl}/weekday?week=${updateDay}`,
+  //         updateDay,
+  //       );
 
-      const weeklyDayWebtoonsAdditionalData =
-        await this.scrapeNaverWebtoonsAdditionalData(
-          weeklyDayWebtoonsSimpleData,
-          { cookie },
-        );
+  //     const weeklyDayWebtoonsAdditionalData =
+  //       await this.scrapeNaverWebtoonsAdditionalData(
+  //         weeklyDayWebtoonsSimpleData,
+  //         { cookie },
+  //       );
 
-      const weeklyDayWebtoons = this.makeWebtoonData(
-        weeklyDayWebtoonsSimpleData,
-        weeklyDayWebtoonsAdditionalData,
-      );
-      console.log(weeklyDayWebtoons.length);
-      return weeklyDayWebtoons;
-    } else if (updateDay === 'finished') {
-      console.log('완결 웹툰 스크래핑 작업');
-      const pageCount = await this.getPageCount(
-        `${baseUrl}/finish`,
-        '#ct > div.section_list_toon > div.paging_type2 > em > span',
-      );
-      const pages = Array.from({ length: pageCount }, (_, i) => i + 1);
-      const webtoonsSimpleDataOfPages =
-        await this.scrapeNaverWebtoonsSimpleData(pages, UpdateDays.finished);
-      // 2차원 배열 => 1차원 배열
-      const webtoonsSimpleData = webtoonsSimpleDataOfPages.reduce(
-        (acc, curr) => [...acc, ...curr],
-      );
-      const webtoonsAdditionalData =
-        await this.scrapeNaverWebtoonsAdditionalData(webtoonsSimpleData, {
-          cookie,
-        });
-      const finishedWebtoons = this.makeWebtoonData(
-        webtoonsSimpleData,
-        webtoonsAdditionalData,
-      );
-      return finishedWebtoons;
-    }
-  }
+  //     const weeklyDayWebtoons = this.makeWebtoonData(
+  //       weeklyDayWebtoonsSimpleData,
+  //       weeklyDayWebtoonsAdditionalData,
+  //     );
+  //     console.log(weeklyDayWebtoons.length);
+  //     return weeklyDayWebtoons;
+  //   } else if (updateDay === 'finished') {
+  //     console.log('완결 웹툰 스크래핑 작업');
+  //     const pageCount = await this.getPageCount(
+  //       `${baseUrl}/finish`,
+  //       '#ct > div.section_list_toon > div.paging_type2 > em > span',
+  //     );
+  //     const pages = Array.from({ length: pageCount }, (_, i) => i + 1);
+  //     const webtoonsSimpleDataOfPages =
+  //       await this.scrapeNaverWebtoonsSimpleData(pages, UpdateDays.finished);
+  //     // 2차원 배열 => 1차원 배열
+  //     const webtoonsSimpleData = webtoonsSimpleDataOfPages.reduce(
+  //       (acc, curr) => [...acc, ...curr],
+  //     );
+  //     const webtoonsAdditionalData =
+  //       await this.scrapeNaverWebtoonsAdditionalData(webtoonsSimpleData, {
+  //         cookie,
+  //       });
+  //     const finishedWebtoons = this.makeWebtoonData(
+  //       webtoonsSimpleData,
+  //       webtoonsAdditionalData,
+  //     );
+  //     return finishedWebtoons;
+  //   }
+  // }
 
   async getPageCount(url: string, selector: string): Promise<number> {
-    const htmlData = await this.getHtmlData(url);
+    const htmlData = await this.getResponseFrom(url);
     const $ = this.loadHtml(htmlData);
     return parseInt($(selector).text());
   }
@@ -206,45 +286,65 @@ export class ScrapeContentService {
     return webtoons;
   }
 
-  async scrapeNaverWebtoonsSimpleData(
+  async collectNaverWebtoonSimpleDataOfTotalPages(
     pages: Array<number>,
     updateDay: UpdateDayCode,
   ) {
     return Promise.all(
-      pages.map((pageNumber) => {
-        if (updateDay === UpdateDays.finished) {
-          return this.scrapeNaverWebtoonSimpleData(
-            `${this.NAVER_WEBTOON_URL}/finish?page=${pageNumber}&sort=UPDATE&genre=`,
-            UpdateDays.finished,
-          );
-        }
-      }),
+      pages.map((pageNumber) =>
+        this.collectNaverWebtoonSimpleDataOfEachPage(
+          `${this.NAVER_WEBTOON_URL}/finish?page=${pageNumber}&sort=UPDATE&genre=`,
+          updateDay,
+        ),
+      ),
     );
   }
 
-  async scrapeNaverWebtoonSimpleData(
+  async collectNaverWebtoonSimpleDataOfEachPage(
     url: string,
     updateDay: UpdateDayCode,
   ): Promise<Array<WebtoonSimpleInfo>> {
-    // url에 대해 axios.get 요청
-    const htmlData = await this.getHtmlData(url);
+    const webtoonSimpleData: Array<WebtoonSimpleInfo> = [];
+    const htmlData = await this.getResponseFrom(url);
     const $ = this.loadHtml(htmlData);
-
-    const webtoonItemList = $(
+    const webtoonItemListElement = $(
       '#ct > .section_list_toon > ul.list_toon > li.item > a',
     );
-    let webtoons: Array<WebtoonSimpleInfo> = [];
-    console.log(`콘텐츠 개수: ${webtoonItemList.length}`);
 
-    for (const webtoonItem of webtoonItemList) {
-      const simpleInfo = await this.getWebtoonItemInfo(
+    for (const webtoonItemElement of webtoonItemListElement) {
+      const webtoonSimpleInfo = await this.scrapeWebtoonItemInfo(
         $,
-        webtoonItem,
+        webtoonItemElement,
         updateDay,
       );
-      webtoons.push(simpleInfo);
+      webtoonSimpleData.push(webtoonSimpleInfo);
     }
-    return webtoons;
+    return webtoonSimpleData;
+  }
+
+  async collectNaverWebtoonSimpleData(
+    url: string,
+    updateDay: UpdateDayCode,
+  ): Promise<Array<WebtoonSimpleInfo>> {
+    let webtoonSimpleData: Array<WebtoonSimpleInfo> =
+      await this.collectNaverWebtoonSimpleDataOfEachPage(url, updateDay);
+
+    if (updateDay === UpdateDays.finished) {
+      const totalPageNumbers = await this.getPageCount(
+        url,
+        '#ct > div.section_list_toon > div.paging_type2 > em > span',
+      );
+      const finishedWebtoonsPageNumberList = Array.from(
+        { length: totalPageNumbers - 1 },
+        (_, i) => i + 2,
+      );
+      const finishedWebtoonsSimpleDataOfPages =
+        await this.collectNaverWebtoonSimpleDataOfTotalPages(
+          finishedWebtoonsPageNumberList,
+          UpdateDays.finished,
+        );
+    }
+    return webtoonSimpleData;
   }
 
   async scrapeNaverWebtoonsAdditionalData(
@@ -335,6 +435,13 @@ export class ScrapeContentService {
     };
   }
 
+  async getResponseFrom(url: string, axiosConfig?: any): Promise<any> {
+    const request = this.httpService
+      .get(url, axiosConfig)
+      .pipe(map((response) => response.data));
+    return lastValueFrom(request);
+  }
+
   async getHtmlData(url: string, cookie?: string): Promise<string> {
     try {
       const axiosConfig = {
@@ -356,7 +463,10 @@ export class ScrapeContentService {
           Cookie: cookie,
         },
       };
-      const html: { data: string } = await axios.get(url, axiosConfig);
+      const html: { data: string } = await this.getResponseFrom(
+        url,
+        axiosConfig,
+      );
       return html.data;
     } catch (err) {
       console.error(err);
@@ -368,7 +478,7 @@ export class ScrapeContentService {
     return load(html);
   }
 
-  getWebtoonItemInfo(
+  scrapeWebtoonItemInfo(
     $: cheerio.Root,
     element: cheerio.Element,
     updateDay: UpdateDayCode,
@@ -445,28 +555,27 @@ export class ScrapeContentService {
     };
   }
 
-  async scrapeKakaoWebtoonSimpleData(
+  async collectKakaoWebtoonSimpleData(
     url: string,
     updateDay: UpdateDayCode,
   ): Promise<WebtoonSimpleInfo[]> {
-    const result = await axios.get(url);
-    const data = result.data.data;
+    const data = await this.getResponseFrom(url);
 
     if (updateDay === UpdateDays.finished) {
-      const contents = data[0]['cardGroups'][0]['cards'];
-      return this.getKakaoWebtoonsSimpleInfo(contents, updateDay);
+      const contents = data.data[0]['cardGroups'][0]['cards'];
+      return this.scrapeKakaoWebtoonSimpleData(contents, updateDay);
     } else {
-      for (const section of data.sections) {
+      for (const section of data.data.sections) {
         // 요일 별 데이터 처리
         if (updateDay === UpdateWeekDaysKor[section.title]) {
           const contents = section.cardGroups[0]['cards'];
-          return this.getKakaoWebtoonsSimpleInfo(contents, updateDay);
+          return this.scrapeKakaoWebtoonSimpleData(contents, updateDay);
         }
       }
     }
   }
 
-  getKakaoWebtoonsSimpleInfo(
+  scrapeKakaoWebtoonSimpleData(
     contents: any,
     updateDay: UpdateDayCode,
   ): WebtoonSimpleInfo[] {
