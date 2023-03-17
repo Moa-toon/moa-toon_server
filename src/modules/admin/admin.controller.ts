@@ -21,23 +21,20 @@ export class AdminController {
   @ApiNoContentResponse({ description: '성공했지만 제공할 컨텐츠가 없음' })
   async getContentsByPlatform(@Query() query: ScrapeContentsReqQueryDto) {
     try {
-      const contents = await this.scrapeContentService.getContentsByPlatform(
+      const contents = await this.scrapeContentService.collectContentData(
         query.platform,
         query.updateDay,
         query.originalType,
-        query.nidAuth && query.nidSes
-          ? { nidAuth: query.nidAuth, nidSes: query.nidSes }
-          : null,
       );
 
-      const genres = this.contentsService.getGenres(contents);
-      const authors = this.contentsService.getAuthors(contents);
-      const tags = this.contentsService.getTags(contents);
-      await this.contentsService.saveGenres(genres);
-      await this.contentsService.saveAuthors(authors);
-      if (contents[0].platform !== Platforms.naver)
-        await this.contentsService.saveTags(tags);
-      await this.contentsService.saveContents(contents);
+      // const genres = this.contentsService.getGenres(contents);
+      // const authors = this.contentsService.getAuthors(contents);
+      // const tags = this.contentsService.getTags(contents);
+      // await this.contentsService.saveGenres(genres);
+      // await this.contentsService.saveAuthors(authors);
+      // if (contents[0].platform !== Platforms.naver)
+      //   await this.contentsService.saveTags(tags);
+      // await this.contentsService.saveContents(contents);
       return setRes(204);
     } catch (err) {
       console.error(err);
